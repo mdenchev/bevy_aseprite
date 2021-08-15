@@ -85,7 +85,7 @@ fn update_animations(
 
         loop {
             let (current_frame_idx, forward, rest_time) = match &mut *aseprite_animation_state {
-                AsepriteAnimationState::Paused { .. } => continue,
+                AsepriteAnimationState::Paused { .. } => break,
                 AsepriteAnimationState::Playing {
                     current_frame,
                     forward,
@@ -505,7 +505,7 @@ impl From<AsepriteTag> for AsepriteAnimation {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 /// Defines the current state of the animation
 ///
 /// # Note
@@ -519,7 +519,8 @@ pub enum AsepriteAnimationState {
         time_elapsed: u64,
     },
     Paused {
-        frame: usize,
+        current_frame: usize,
+        forward: bool,
     },
 }
 
@@ -528,15 +529,80 @@ impl AsepriteAnimationState {
     pub fn get_current_frame(&self) -> usize {
         match self {
             Self::Playing { current_frame, .. } => *current_frame,
-            Self::Paused { frame } => *frame,
+            Self::Paused {
+                current_frame: frame,
+                ..
+            } => *frame,
         }
     }
+
     /// Start playing an animation
-    pub fn start(self, current_frame: usize, forward: bool) -> Self {
-        AsepriteAnimationState::Playing {
-            current_frame,
-            forward,
-            time_elapsed: 0,
+    pub fn start(&mut self) {
+        match self {
+            AsepriteAnimationState::Playing { .. } => (),
+            AsepriteAnimationState::Paused {
+                current_frame,
+                forward,
+            } => {
+                *self = AsepriteAnimationState::Playing {
+                    current_frame: *current_frame,
+                    forward: *forward,
+                    time_elapsed: 0,
+                }
+            }
+        }
+    }
+
+    /// Pause the current animation
+    pub fn pause(&mut self) {
+        match self {
+            AsepriteAnimationState::Paused { .. } => (),
+            AsepriteAnimationState::Playing {
+                current_frame,
+                forward,
+                ..
+            } => {
+                *self = AsepriteAnimationState::Paused {
+                    current_frame: *current_frame,
+                    forward: *forward,
+                }
+            }
+        }
+    }
+
+    /// Returns `true` if the aseprite_animation_state is [`Playing`].
+    pub fn is_playing(&self) -> bool {
+        matches!(self, Self::Playing { .. })
+    }
+
+    /// Returns `true` if the aseprite_animation_state is [`Paused`].
+    pub fn is_paused(&self) -> bool {
+        matches!(self, Self::Paused { .. })
+    }
+
+    /// Toggle state between playing and pausing
+    pub fn toggle(&mut self) {
+        match self {
+            AsepriteAnimationState::Playing {
+                current_frame,
+                forward,
+                ..
+            } => {
+                *self = Self::Paused {
+                    current_frame: *current_frame,
+                    forward: *forward,
+                };
+            }
+            AsepriteAnimationState::Paused {
+                current_frame,
+                forward,
+            } => {
+                *self = Self::Playing {
+                    current_frame: *current_frame,
+                    forward: *forward,
+                    time_elapsed: 0,
+                };
+            }
         }
     }
 }

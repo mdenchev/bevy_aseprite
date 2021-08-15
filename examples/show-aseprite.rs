@@ -1,5 +1,7 @@
 use bevy::prelude::*;
-use bevy_spicy_aseprite::{AsepriteAnimation, AsepriteBundle, AsepritePlugin};
+use bevy_spicy_aseprite::{
+    AsepriteAnimation, AsepriteAnimationState, AsepriteBundle, AsepritePlugin,
+};
 
 mod sprites {
     use bevy_spicy_aseprite::aseprite;
@@ -14,6 +16,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(AsepritePlugin)
         .add_startup_system(setup)
+        .add_system(toggle_sprite)
         .run();
 }
 
@@ -85,3 +88,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 // Made by https://meitdev.itch.io/crow
+
+fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAnimationState>) {
+    if keys.just_pressed(KeyCode::Space) {
+        for mut state in aseprites.iter_mut() {
+            state.toggle();
+        }
+    }
+}

@@ -53,3 +53,5 @@ Check out the example to see how it could be used:
 ```bash
 cargo run --example show-aseprite
 ```
+
+Press space to pause and unpause
