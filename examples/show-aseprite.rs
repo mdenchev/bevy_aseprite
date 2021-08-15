@@ -41,7 +41,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
     commands.spawn_bundle(AsepriteBundle {
         aseprite: sprites::Crow::sprite(),
-        animation: AsepriteAnimation::from(sprites::Crow::tags::FlapWingsReverse),
+        animation: AsepriteAnimation::from(sprites::Crow::tags::Groove),
         transform: Transform {
             scale: Vec3::splat(4.),
             translation: Vec3::new(0., 0., 0.),

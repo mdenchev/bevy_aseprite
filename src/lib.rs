@@ -468,10 +468,11 @@ impl AsepriteAnimation {
                     aseprite_reader::raw::AsepriteAnimationDirection::Reverse => {
                         let next_frame = current_frame.checked_sub(1);
                         if let Some(next_frame) = next_frame {
-                            return (next_frame, false);
-                        } else {
-                            return (range.end as usize - 1, false);
+                            if range.contains(&(next_frame as u16)) {
+                                return (next_frame, false);
+                            }
                         }
+                        return (range.end as usize, false);
                     }
                     aseprite_reader::raw::AsepriteAnimationDirection::PingPong => {
                         if forward {
@@ -479,15 +480,16 @@ impl AsepriteAnimation {
                             if range.contains(&(next_frame as u16)) {
                                 return (next_frame, false);
                             } else {
-                                return (next_frame.saturating_sub(0), true);
+                                return (next_frame.saturating_sub(1), true);
                             }
                         } else {
                             let next_frame = current_frame.checked_sub(1);
                             if let Some(next_frame) = next_frame {
-                                return (next_frame, false);
-                            } else {
-                                return (current_frame + 1, true);
+                                if range.contains(&(next_frame as u16)) {
+                                    return (next_frame, false);
+                                }
                             }
+                            return (current_frame + 1, true);
                         }
                     }
                 }
