@@ -33,3 +33,10 @@ This crate allows you to integrate your aseprite files into your game project at
     });
     ```
 
+## Examples
+
+Check out the example to see how it could be used:
+
+```bash
+cargo run --example show-aseprite
+```
