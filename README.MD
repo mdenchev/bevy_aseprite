@@ -17,9 +17,10 @@ Here's what's included:
 
 ## How to use it
 
-1. Include this repository
+1. Include this repository in your game
+    `cargo add https://github.com/TheNeikos/bevy-spicy-aseprite`
 2. Import your aseprite file:
-    ```rust
+    ```rust,ignore
     aseprite!(pub Player, "assets/sprites/player.aseprite");
     ```
 3. This transform the macro invocation into something similar to this:
@@ -32,7 +33,7 @@ Here's what's included:
     }
     ```
 4. Use it in your games:
-    ```rust
+    ```rust,ignore
     commands.spawn_bundle(AsepriteBundle {
         aseprite: Player::sprite(),
         animation: AsepriteAnimation::from(Player::tags::Walk),
