@@ -161,7 +161,7 @@ fn update_spritesheet_anim(
             continue;
         };
 
-        let texture = if let Some(tex) = aseprite.textures.get(frame_idx) {
+        let texture = if let Some(tex) = aseprite.frames.get(frame_idx) {
             tex
         } else {
             continue;
@@ -346,7 +346,14 @@ impl Atlas {
 pub struct AsepriteImage {
     aseprite: Aseprite,
     texture_atlas: Atlas,
-    textures: Vec<Handle<Texture>>,
+    frames: Vec<Handle<Texture>>,
+}
+
+impl AsepriteImage {
+    /// Get the texture handles associated to the frames
+    pub fn frames(&self) -> &[Handle<Texture>] {
+        &self.frames
+    }
 }
 
 /// The loader of aseprite files
@@ -394,7 +401,7 @@ impl AssetLoader for AsepriteLoader {
             load_context.set_default_asset(LoadedAsset::new(AsepriteImage {
                 aseprite,
                 texture_atlas: Atlas::Builder(atlas_builder),
-                textures,
+                frames: textures,
             }));
             Ok(())
         })
