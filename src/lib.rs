@@ -23,7 +23,7 @@
 use std::ops::DerefMut;
 use std::path::{Path, PathBuf};
 
-use aseprite_reader::Aseprite;
+use aseprite_reader::{Aseprite, AsepriteSliceImage, NineSlice};
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use bevy::{
@@ -213,7 +213,7 @@ fn check_aseprite_data(
             AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
                 {
                     if let Some(img) = aseprite_image_assets.get(handle) {
-                        if img.frame_atlas.is_handle() {
+                        if img.atlas.is_handle() {
                             continue;
                         }
                     } else {
@@ -228,11 +228,7 @@ fn check_aseprite_data(
                 };
 
                 image
-                    .frame_atlas
-                    .load(&mut texture_atlas_assets, &mut texture_assets);
-
-                image
-                    .slice_atlas
+                    .atlas
                     .load(&mut texture_atlas_assets, &mut texture_assets);
 
                 for (aseprite_entity, aseprite_sheet, mut aseprite_handle) in
@@ -250,7 +246,7 @@ fn check_aseprite_data(
                         continue;
                     };
 
-                    let atlas_handle = if let Some(atlas_handle) = image.frame_atlas.get_atlas() {
+                    let atlas_handle = if let Some(atlas_handle) = image.atlas.get_atlas() {
                         atlas_handle
                     } else {
                         info!("No texture atlas");
@@ -374,15 +370,22 @@ impl Atlas {
     }
 }
 
+#[derive(Debug)]
+/// The textures in a slice
+#[allow(missing_docs)]
+pub struct AsepriteSliceTextures {
+    pub texture_handle: Handle<Texture>,
+    pub nine_patch_handles: Option<HashMap<NineSlice, Handle<Texture>>>,
+}
+
 /// An internal type containing the different images the associated aseprite file has
 #[derive(Debug, TypeUuid)]
 #[uuid = "8da03a16-d6d5-42c3-b4c7-fc68f53e0769"]
 pub struct AsepriteImage {
     aseprite: Aseprite,
-    frame_atlas: Atlas,
+    atlas: Atlas,
     frames: Vec<Handle<Texture>>,
-    slice_atlas: Atlas,
-    slices: HashMap<String, Handle<Texture>>,
+    slices: HashMap<String, AsepriteSliceTextures>,
 }
 
 impl AsepriteImage {
@@ -392,7 +395,7 @@ impl AsepriteImage {
     }
 
     /// Get the slice handles associated to this aseprite
-    pub fn slices(&self) -> &HashMap<String, Handle<Texture>> {
+    pub fn slices(&self) -> &HashMap<String, AsepriteSliceTextures> {
         &self.slices
     }
 }
@@ -417,7 +420,7 @@ impl AssetLoader for AsepriteLoader {
                 .get_images()
                 .unwrap();
 
-            let mut frame_atlas_builder = TextureAtlasBuilder::default()
+            let mut aseprite_atlas = TextureAtlasBuilder::default()
                 .format(bevy::render::texture::TextureFormat::Rgba8UnormSrgb);
 
             let mut frame_textures = vec![];
@@ -433,14 +436,11 @@ impl AssetLoader for AsepriteLoader {
                 let texture_handle =
                     load_context.set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
 
-                frame_atlas_builder.add_texture(texture_handle.clone(), &texture);
+                aseprite_atlas.add_texture(texture_handle.clone(), &texture);
                 frame_textures.push(texture_handle);
             }
 
             info!("Finished loading aseprite");
-
-            let mut slice_atlas_builder = TextureAtlasBuilder::default()
-                .format(bevy::render::texture::TextureFormat::Rgba8UnormSrgb);
 
             let slices = aseprite.slices();
 
@@ -452,7 +452,7 @@ impl AssetLoader for AsepriteLoader {
                         .get_images(slices.get_all())?
                         .into_iter()
                         .enumerate()
-                        .map(|(idx, image)| {
+                        .map(|(idx, AsepriteSliceImage { image, nine_slices })| {
                             let texture = Texture::new(
                                 Extent3d::new(image.width(), image.height(), 1),
                                 bevy::render::texture::TextureDimension::D2,
@@ -463,18 +463,49 @@ impl AssetLoader for AsepriteLoader {
                             let texture_handle = load_context
                                 .set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
 
-                            slice_atlas_builder.add_texture(texture_handle.clone(), &texture);
+                            aseprite_atlas.add_texture(texture_handle.clone(), &texture);
 
-                            texture_handle
+                            let nine_patch_handles = nine_slices.map(|nine_slices| {
+                                nine_slices
+                                    .into_iter()
+                                    .map(|(key, image_buffer)| {
+                                        let texture = Texture::new(
+                                            Extent3d::new(
+                                                image_buffer.width(),
+                                                image_buffer.height(),
+                                                1,
+                                            ),
+                                            bevy::render::texture::TextureDimension::D2,
+                                            image_buffer.into_raw(),
+                                            bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
+                                        );
+
+                                        let label = format!("Slice{}{:?}", idx, key);
+                                        let texture_handle = load_context.set_labeled_asset(
+                                            &label,
+                                            LoadedAsset::new(texture.clone()),
+                                        );
+
+                                        aseprite_atlas
+                                            .add_texture(texture_handle.clone(), &texture);
+
+                                        (key, texture_handle)
+                                    })
+                                    .collect()
+                            });
+
+                            AsepriteSliceTextures {
+                                texture_handle,
+                                nine_patch_handles,
+                            }
                         }),
                 )
                 .collect();
 
             load_context.set_default_asset(LoadedAsset::new(AsepriteImage {
                 aseprite,
-                frame_atlas: Atlas::Builder(frame_atlas_builder),
+                atlas: Atlas::Builder(aseprite_atlas),
                 frames: frame_textures,
-                slice_atlas: Atlas::Builder(slice_atlas_builder),
                 slices: slice_textures,
             }));
             Ok(())
