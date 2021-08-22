@@ -46,17 +46,32 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
         quote!(::bevy_spicy_aseprite::AsepriteTag::new( #tagname ))
     });
 
+    let slices = aseprite.slices();
+
+    let slice_names = slices
+        .get_all()
+        .map(|slice| format_ident!("{}", slice.name.to_camel_case()));
+    let slice_values = slices.get_all().map(|slice| {
+        let slice_name = &slice.name;
+
+        quote! {::bevy_spicy_aseprite::AsepriteSlice::new( #slice_name ) }
+    });
+
     let expanded = quote! {
         #[allow(non_snake_case)]
-        pub mod #name {
+        #vis mod #name {
             pub fn sprite() -> ::bevy_spicy_aseprite::AsepriteInfo {
                 ::bevy_spicy_aseprite::AsepriteInfo {
                     path: ::std::path::PathBuf::from(#path),
                 }
             }
 
-            #vis mod tags {
+            pub mod tags {
                 #( pub const #tag_names: ::bevy_spicy_aseprite::AsepriteTag = #tag_values; )*
+            }
+
+            pub mod slices {
+                #( pub const #slice_names: ::bevy_spicy_aseprite::AsepriteSlice = #slice_values; )*
             }
         }
 
