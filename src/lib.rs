@@ -398,6 +398,11 @@ impl AsepriteImage {
     pub fn slices(&self) -> &HashMap<String, AsepriteSliceTextures> {
         &self.slices
     }
+
+    /// Get the underlying aseprite definition
+    pub fn aseprite(&self) -> &Aseprite {
+        &self.aseprite
+    }
 }
 
 /// The loader of aseprite files
