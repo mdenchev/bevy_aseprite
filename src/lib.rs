@@ -459,7 +459,7 @@ impl AssetLoader for AsepriteLoader {
                                 image.into_raw(),
                                 bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
                             );
-                            let label = format!("Slice{}", slice.name);
+                            let label = format!("Slice/{}", slice.name);
                             let texture_handle = load_context
                                 .set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
 
