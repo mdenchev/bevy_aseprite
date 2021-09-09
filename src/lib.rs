@@ -451,15 +451,15 @@ impl AssetLoader for AsepriteLoader {
                     slices
                         .get_images(slices.get_all())?
                         .into_iter()
-                        .enumerate()
-                        .map(|(idx, AsepriteSliceImage { image, nine_slices })| {
+                        .zip(slices.get_all())
+                        .map(|(AsepriteSliceImage { image, nine_slices }, slice)| {
                             let texture = Texture::new(
                                 Extent3d::new(image.width(), image.height(), 1),
                                 bevy::render::texture::TextureDimension::D2,
                                 image.into_raw(),
                                 bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
                             );
-                            let label = format!("Slice{}", idx);
+                            let label = format!("Slice{}", slice.name);
                             let texture_handle = load_context
                                 .set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
 
@@ -480,7 +480,7 @@ impl AssetLoader for AsepriteLoader {
                                             bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
                                         );
 
-                                        let label = format!("Slice{}{:?}", idx, key);
+                                        let label = format!("{}{:?}", label, key);
                                         let texture_handle = load_context.set_labeled_asset(
                                             &label,
                                             LoadedAsset::new(texture.clone()),
