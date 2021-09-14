@@ -465,7 +465,7 @@ impl AssetLoader for AsepriteLoader {
                                 bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
                             );
 
-                            let label = format!("Slice/{}", slice.name);
+                            let label = slice.label();
                             let texture_handle = load_context
                                 .set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
 
@@ -486,7 +486,7 @@ impl AssetLoader for AsepriteLoader {
                                             bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
                                         );
 
-                                        let label = format!("{}/{:?}", label, key);
+                                        let label = slice.label_with_nine_slice(key);
                                         let texture_handle = load_context.set_labeled_asset(
                                             &label,
                                             LoadedAsset::new(texture.clone()),
@@ -752,4 +752,23 @@ pub struct AsepriteBundle {
     pub animation_state: AsepriteAnimationState,
     pub handle: Handle<AsepriteImage>,
     pub grid_info: Option<AsepriteGrid>,
+}
+
+/// Helper methods to get the label for a specific slice
+pub trait AsepriteSliceName {
+    /// Label for the whole slice
+    fn label(&self) -> String;
+
+    /// Label for just a part of the slice as given by `nine_slice`
+    fn label_with_nine_slice(&self, nine_slice: NineSlice) -> String;
+}
+
+impl AsepriteSliceName for aseprite_reader::AsepriteSlice {
+    fn label(&self) -> String {
+        format!("Slices/{}", self.name)
+    }
+
+    fn label_with_nine_slice(&self, nine_slice: NineSlice) -> String {
+        format!("Slices/{}/{:?}", self.name, nine_slice)
+    }
 }
