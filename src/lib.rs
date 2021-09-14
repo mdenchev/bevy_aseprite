@@ -772,3 +772,13 @@ impl AsepriteSliceName for aseprite_reader::AsepriteSlice {
         format!("Slices/{}/{:?}", self.name, nine_slice)
     }
 }
+
+impl AsepriteSliceName for AsepriteSlice {
+    fn label(&self) -> String {
+        format!("Slices/{}", self.0)
+    }
+
+    fn label_with_nine_slice(&self, nine_slice: NineSlice) -> String {
+        format!("Slices/{}/{:?}", self.0, nine_slice)
+    }
+}
