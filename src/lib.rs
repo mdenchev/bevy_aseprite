@@ -202,11 +202,14 @@ fn check_aseprite_data(
     mut aseprite_image_assets: ResMut<Assets<AsepriteImage>>,
     mut texture_assets: ResMut<Assets<Texture>>,
     mut texture_atlas_assets: ResMut<Assets<TextureAtlas>>,
-    mut existing_aseprites: Query<(
-        Entity,
-        Option<&AsepriteSheetEntity>,
-        &mut Handle<AsepriteImage>,
-    )>,
+    mut existing_aseprites: Query<
+        (
+            Entity,
+            Option<&AsepriteSheetEntity>,
+            &mut Handle<AsepriteImage>,
+        ),
+        With<AsepriteAnimation>,
+    >,
 ) {
     for event in aseprite_image_events.iter() {
         match event {
