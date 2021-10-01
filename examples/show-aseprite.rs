@@ -34,7 +34,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(AsepriteBundle {
         aseprite: sprites::Crow::sprite(),
-        animation: AsepriteAnimation::from(sprites::Crow::tags::FlapWings),
+        animation: AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS),
         transform: Transform {
             scale: Vec3::splat(4.),
             translation: Vec3::new(0., -200., 0.),
@@ -44,7 +44,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
     commands.spawn_bundle(AsepriteBundle {
         aseprite: sprites::Crow::sprite(),
-        animation: AsepriteAnimation::from(sprites::Crow::tags::Groove),
+        animation: AsepriteAnimation::from(sprites::Crow::tags::GROOVE),
         transform: Transform {
             scale: Vec3::splat(4.),
             translation: Vec3::new(0., 0., 0.),

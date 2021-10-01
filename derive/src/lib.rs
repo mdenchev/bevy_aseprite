@@ -1,5 +1,5 @@
 use aseprite_reader::Aseprite;
-use heck::CamelCase;
+use heck::{CamelCase, ShoutySnekCase};
 use proc_macro::TokenStream;
 use proc_macro_error::abort;
 use proc_macro_error::proc_macro_error;
@@ -40,7 +40,7 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
     let tags = aseprite.tags();
     let tag_names = tags
         .all()
-        .map(|tag| format_ident!("{}", tag.name.to_camel_case()));
+        .map(|tag| format_ident!("{}", tag.name.TO_SHOUTY_SNEK_CASE()));
     let tag_values = tags.all().map(|tag| {
         let tagname = &tag.name;
         quote!(::bevy_spicy_aseprite::AsepriteTag::new( #tagname ))
@@ -50,7 +50,7 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
 
     let slice_names = slices
         .get_all()
-        .map(|slice| format_ident!("{}", slice.name.to_camel_case()));
+        .map(|slice| format_ident!("{}", slice.name.TO_SHOUTY_SNEK_CASE()));
     let slice_values = slices.get_all().map(|slice| {
         let slice_name = &slice.name;
 
