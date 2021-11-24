@@ -16,7 +16,6 @@
     clippy::panic,
     clippy::print_stdout,
     clippy::todo,
-    clippy::unwrap_used
 )]
 #![doc = include_str!("../README.MD")]
 
@@ -194,6 +193,7 @@ fn update_spritesheet_anim(
     }
 }
 
+#[derive(Component)]
 struct AsepriteSheetEntity(Entity);
 
 fn check_aseprite_data(
@@ -527,7 +527,7 @@ impl AssetLoader for AsepriteLoader {
 }
 
 /// All the info about a specific aseprite
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Component)]
 pub struct AsepriteInfo {
     /// The path to the aseprite file, relative to the crate root
     pub path: PathBuf,
@@ -539,7 +539,7 @@ impl AsepriteInfo {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 /// An aseprite animation
 pub enum AsepriteAnimation {
     /// The animation is defined as in this tag
@@ -626,7 +626,7 @@ impl From<AsepriteTag> for AsepriteAnimation {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Component)]
 /// Defines the current state of the animation
 ///
 /// # Note
@@ -738,10 +738,10 @@ impl Default for AsepriteAnimationState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Component)]
 /// Defines if this aseprite should be treated as a grid
 pub struct AsepriteGrid {
-    padding: u64,
+    padding: Option<u64>,
 }
 
 /// A bundle defining a drawn aseprite
@@ -754,7 +754,7 @@ pub struct AsepriteBundle {
     pub animation: AsepriteAnimation,
     pub animation_state: AsepriteAnimationState,
     pub handle: Handle<AsepriteImage>,
-    pub grid_info: Option<AsepriteGrid>,
+    pub grid_info: AsepriteGrid,
 }
 
 /// Helper methods to get the label for a specific slice

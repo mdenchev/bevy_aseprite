@@ -16,12 +16,9 @@ members = ["derive"]
 anyhow = "1.0.43"
 aseprite-reader = { git = "https://github.com/TheNeikos/aseprite-reader.git" }
 async-io = "1.6.0"
-bevy = { version = "0.5", default-features = false, features = ["render"] }
+bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = ["render"] }
 bevy_spicy_aseprite_derive = { path = "./derive" }
 
 [dev-dependencies]
-bevy = { version = "0.5.0" }
-tracing-log = "0.1.2"
-
-[patch.crates-io]
 bevy = { git = "https://github.com/bevyengine/bevy.git" }
+tracing-log = "0.1.2"
