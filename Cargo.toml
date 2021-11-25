@@ -2,7 +2,7 @@
 name = "bevy_spicy_aseprite"
 version = "0.1.0"
 description = "Compile time aseprite bevy integration"
-edition = "2018"
+edition = "2021"
 resolver = "2"
 license = "MIT OR Apache-2.0"
 exclude = ["assets/"]
@@ -14,11 +14,9 @@ members = ["derive"]
 
 [dependencies]
 anyhow = "1.0.43"
-aseprite-reader = { git = "https://github.com/TheNeikos/aseprite-reader.git" }
-async-io = "1.6.0"
-bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = ["render"] }
+aseprite-reader = { path = "../aseprite-reader" }
+bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = ["render"]  }
 bevy_spicy_aseprite_derive = { path = "./derive" }
 
 [dev-dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git" }
 tracing-log = "0.1.2"
