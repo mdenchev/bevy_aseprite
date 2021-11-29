@@ -11,6 +11,9 @@ proc-macro = true
 [dependencies]
 syn = "1.0"
 quote = "1.0"
-aseprite-reader = { path = "../../aseprite-reader" }
+aseprite-reader = { git = "https://github.com/mdenchev/aseprite-reader" }
 proc-macro-error = "1.0.4"
 heck = "0.3.3"
+
+[patch.'https://github.com/TheNeikos/aseprite-reader']
+aseprite-reader = { git = "https://github.com/mdenchev/aseprite-reader" }
