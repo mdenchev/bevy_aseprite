@@ -141,6 +141,7 @@ fn load_aseprites(
     }
 }
 
+// Update the 
 fn update_spritesheet_anim(
     aseprite_assets: Res<Assets<AsepriteImage>>,
     texture_atlas_assets: Res<Assets<TextureAtlas>>,
@@ -336,27 +337,17 @@ enum Atlas {
 
 impl Atlas {
     fn load(&mut self, texture_atlases: &mut Assets<TextureAtlas>, textures: &mut Assets<Texture>) {
-        let handle = Handle::default();
         match self {
             Atlas::Builder(_) => {
                 if let Atlas::Builder(builder) =
-                    std::mem::replace(self, Atlas::Handle(handle.clone()))
+                    std::mem::replace(self, Atlas::Handle(Handle::default()))
                 {
                     let texture_atlas = builder.finish(textures).unwrap();
-
-                    let new_handle = texture_atlases.set(handle, texture_atlas);
-
-                    self.set_atlas(new_handle);
+                    let handle = texture_atlases.add(texture_atlas);
+                    *self = Atlas::Handle(handle);
                 }
             }
             Atlas::Handle(_) => (),
-        }
-    }
-
-    fn set_atlas(&mut self, new_handle: Handle<TextureAtlas>) {
-        match self {
-            Atlas::Builder(_) => (),
-            Atlas::Handle(ref mut handle) => *handle = new_handle,
         }
     }
 

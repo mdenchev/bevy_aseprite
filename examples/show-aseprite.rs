@@ -7,6 +7,8 @@ mod sprites {
     use bevy_spicy_aseprite::aseprite;
 
     aseprite!(pub Crow, "assets/crow.aseprite");
+    //https://shubibubi.itch.io/cozy-people
+    aseprite!(pub Player, "assets/player.ase");
 }
 
 fn main() {
@@ -37,17 +39,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         animation: AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS),
         transform: Transform {
             scale: Vec3::splat(4.),
-            translation: Vec3::new(0., -200., 0.),
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-    commands.spawn_bundle(AsepriteBundle {
-        aseprite: sprites::Crow::sprite(),
-        animation: AsepriteAnimation::from(sprites::Crow::tags::GROOVE),
-        transform: Transform {
-            scale: Vec3::splat(4.),
-            translation: Vec3::new(0., 0., 0.),
+            translation: Vec3::new(0., 150., 0.),
             ..Default::default()
         },
         ..Default::default()
@@ -84,6 +76,50 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         },
         transform: Transform::from_translation(Vec3::new(0., 300., 0.)),
+        ..Default::default()
+    });
+    commands.spawn_bundle(AsepriteBundle {
+        aseprite: sprites::Player::sprite(),
+        animation: AsepriteAnimation::from(sprites::Player::tags::LEFT_WALK),
+        transform: Transform {
+            scale: Vec3::splat(4.),
+            translation: Vec3::new(0., -200., 0.),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center,
+            },
+            sections: vec![
+                TextSection {
+                    value: String::from("The human was made by "),
+                    style: TextStyle {
+                        color: Color::WHITE,
+                        ..text_style.clone()
+                    },
+                },
+                TextSection {
+                    value: String::from("shubibubi"),
+                    style: TextStyle {
+                        color: Color::BLUE,
+                        ..text_style.clone()
+                    },
+                },
+                TextSection {
+                    value: String::from(" on itch.io"),
+                    style: TextStyle {
+                        color: Color::WHITE,
+                        ..text_style.clone()
+                    },
+                },
+            ],
+            ..Default::default()
+        },
+        transform: Transform::from_translation(Vec3::new(0., -100., 0.)),
         ..Default::default()
     });
 }
