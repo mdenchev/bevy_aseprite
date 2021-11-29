@@ -53,6 +53,11 @@ impl Plugin for AsepritePlugin {
             )
             .add_system(load_aseprites)
             .add_system(
+                switch_tag
+                    .system()
+                    .before(AsepriteSystems::UpdateAnim),
+            )
+            .add_system(
                 update_animations
                     .system()
                     .label(AsepriteSystems::UpdateAnim),
@@ -119,6 +124,39 @@ fn update_animations(
             } else {
                 break;
             }
+        }
+    }
+}
+
+fn switch_tag(
+    aseprite_image_assets: Res<Assets<AsepriteImage>>,
+    mut aseprites_query: Query<(
+        &Handle<AsepriteImage>,
+        &AsepriteAnimation,
+        &mut AsepriteAnimationState,
+    ), Changed<AsepriteAnimation>>,
+) {
+    for (aseprite_handle, aseprite_animation, mut aseprite_animation_state) in
+        aseprites_query.iter_mut()
+    {
+        let image = if let Some(image) = aseprite_image_assets.get(aseprite_handle.clone_weak()) {
+            image
+        } else {
+            continue;
+        };
+
+        loop {
+            let (_current_frame_idx, _forward, rest_time) = match &mut *aseprite_animation_state {
+                AsepriteAnimationState::Paused { .. } => break,
+                AsepriteAnimationState::Playing {
+                    current_frame,
+                    forward,
+                    time_elapsed,
+                } => (current_frame, forward, time_elapsed),
+            };
+
+            *rest_time = 0;
+            aseprite_animation.get_first_frame(image);
         }
     }
 }
@@ -549,6 +587,29 @@ impl Default for AsepriteAnimation {
 }
 
 impl AsepriteAnimation {
+    /// Return the first frame of this tag
+    pub fn get_first_frame(&self,
+        aseprite: &AsepriteImage,
+    ) -> usize {
+        match self {
+            AsepriteAnimation::Tag {
+                tag: AsepriteTag(name),
+            } => {
+                let tags = aseprite.aseprite.tags();
+                let tag = if let Some(tag) = tags.get_by_name(name) {
+                    tag
+                } else {
+                    error!("Tag {} wasn't found.", name);
+                    return 0
+                };
+
+                let range = tag.frames.clone();
+                range.start as usize
+            }
+            _ => 0
+        }
+    }
+
     /// Calculate the next frame from the current one
     pub fn get_next_frame(
         &self,
