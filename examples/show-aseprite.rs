@@ -12,8 +12,6 @@ mod sprites {
 }
 
 fn main() {
-    tracing_log::LogTracer::init().unwrap();
-
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(AsepritePlugin)

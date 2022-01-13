@@ -1,6 +1,6 @@
 [package]
 name = "bevy_spicy_aseprite"
-version = "0.1.0"
+version = "0.6.0"
 description = "Compile time aseprite bevy integration"
 edition = "2021"
 resolver = "2"
@@ -15,9 +15,8 @@ members = ["derive"]
 [dependencies]
 anyhow = "1.0.43"
 aseprite-reader = { git = "https://github.com/mdenchev/aseprite-reader" }
-bevy = { git = "https://github.com/bevyengine/bevy", default-features = false, features = ["render"] }
+bevy = { version = "0.6", default-features = false, features = ["render"] }
 bevy_spicy_aseprite_derive = { path = "./derive" }
 
 [dev-dependencies]
-tracing-log = "0.1.2"
-bevy = { git = "https://github.com/bevyengine/bevy.git" }
+bevy = { version = "0.6" }

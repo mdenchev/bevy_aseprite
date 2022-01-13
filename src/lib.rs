@@ -25,12 +25,12 @@ use std::path::{Path, PathBuf};
 use aseprite_reader::{Aseprite, AsepriteSliceImage, NineSlice};
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
+use bevy::render::render_resource::{TextureFormat, Extent3d, TextureDimension};
 use bevy::{
     asset::{AssetLoader, AssetServerSettings, LoadedAsset},
     utils::HashMap,
 };
 
-use bevy::render::texture::Extent3d;
 use bevy::sprite::TextureAtlasBuilder;
 pub use bevy_spicy_aseprite_derive::aseprite;
 
@@ -48,23 +48,19 @@ impl Plugin for AsepritePlugin {
             .add_asset_loader(AsepriteLoader)
             .add_system(
                 check_aseprite_data
-                    .system()
                     .before(AsepriteSystems::UpdateAnim),
             )
             .add_system(load_aseprites)
             .add_system(
                 switch_tag
-                    .system()
                     .before(AsepriteSystems::UpdateAnim),
             )
             .add_system(
                 update_animations
-                    .system()
                     .label(AsepriteSystems::UpdateAnim),
             )
             .add_system(
                 update_spritesheet_anim
-                    .system()
                     .after(AsepriteSystems::UpdateAnim),
             );
     }
@@ -222,10 +218,10 @@ fn update_spritesheet_anim(
         };
 
         atlas_sprite.index = if let Some(idx) = atlas.get_texture_index(&texture) {
-            if atlas_sprite.index == idx as u32 {
+            if atlas_sprite.index == idx {
                 continue;
             }
-            idx as u32
+            idx
         } else {
             continue;
         };
@@ -239,7 +235,7 @@ fn check_aseprite_data(
     mut commands: Commands,
     mut aseprite_image_events: EventReader<AssetEvent<AsepriteImage>>,
     mut aseprite_image_assets: ResMut<Assets<AsepriteImage>>,
-    mut texture_assets: ResMut<Assets<Texture>>,
+    mut texture_assets: ResMut<Assets<Image>>,
     mut texture_atlas_assets: ResMut<Assets<TextureAtlas>>,
     mut existing_aseprites: Query<
         (
@@ -374,7 +370,7 @@ enum Atlas {
 }
 
 impl Atlas {
-    fn load(&mut self, texture_atlases: &mut Assets<TextureAtlas>, textures: &mut Assets<Texture>) {
+    fn load(&mut self, texture_atlases: &mut Assets<TextureAtlas>, textures: &mut Assets<Image>) {
         match self {
             Atlas::Builder(_) => {
                 if let Atlas::Builder(builder) =
@@ -406,8 +402,8 @@ impl Atlas {
 /// The textures in a slice
 #[allow(missing_docs)]
 pub struct AsepriteSliceTextures {
-    pub texture_handle: Handle<Texture>,
-    pub nine_patch_handles: Option<HashMap<NineSlice, Handle<Texture>>>,
+    pub texture_handle: Handle<Image>,
+    pub nine_patch_handles: Option<HashMap<NineSlice, Handle<Image>>>,
 }
 
 /// An internal type containing the different images the associated aseprite file has
@@ -416,13 +412,13 @@ pub struct AsepriteSliceTextures {
 pub struct AsepriteImage {
     aseprite: Aseprite,
     atlas: Atlas,
-    frames: Vec<Handle<Texture>>,
+    frames: Vec<Handle<Image>>,
     slices: HashMap<String, AsepriteSliceTextures>,
 }
 
 impl AsepriteImage {
     /// Get the texture handles associated to the frames
-    pub fn frames(&self) -> &[Handle<Texture>] {
+    pub fn frames(&self) -> &[Handle<Image>] {
         &self.frames
     }
 
@@ -458,16 +454,16 @@ impl AssetLoader for AsepriteLoader {
                 .unwrap();
 
             let mut aseprite_atlas = TextureAtlasBuilder::default()
-                .format(bevy::render::texture::TextureFormat::Rgba8UnormSrgb);
+                .format(TextureFormat::Rgba8UnormSrgb);
 
             let mut frame_textures = vec![];
 
             for (idx, image) in images.into_iter().enumerate() {
-                let texture = Texture::new(
-                    Extent3d::new(image.width(), image.height(), 1),
-                    bevy::render::texture::TextureDimension::D2,
+                let texture = Image::new(
+                    Extent3d { width: image.width(), height: image.height(), depth_or_array_layers: 1 },
+                    TextureDimension::D2,
                     image.into_raw(),
-                    bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
+                    TextureFormat::Rgba8UnormSrgb,
                 );
                 let label = format!("Frame{}", idx);
                 let texture_handle =
@@ -490,11 +486,11 @@ impl AssetLoader for AsepriteLoader {
                         .into_iter()
                         .zip(slices.get_all())
                         .map(|(AsepriteSliceImage { image, nine_slices }, slice)| {
-                            let texture = Texture::new(
-                                Extent3d::new(image.width(), image.height(), 1),
-                                bevy::render::texture::TextureDimension::D2,
+                            let texture = Image::new(
+                                Extent3d { width: image.width(), height: image.height(), depth_or_array_layers: 1 },
+                                TextureDimension::D2,
                                 image.into_raw(),
-                                bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
+                                TextureFormat::Rgba8UnormSrgb,
                             );
 
                             let label = slice.label();
@@ -507,15 +503,15 @@ impl AssetLoader for AsepriteLoader {
                                 nine_slices
                                     .into_iter()
                                     .map(|(key, image_buffer)| {
-                                        let texture = Texture::new(
-                                            Extent3d::new(
-                                                image_buffer.width(),
-                                                image_buffer.height(),
-                                                1,
-                                            ),
-                                            bevy::render::texture::TextureDimension::D2,
+                                        let texture = Image::new(
+                                            Extent3d {
+                                                width: image_buffer.width(),
+                                                height: image_buffer.height(),
+                                                depth_or_array_layers: 1,
+                                            },
+                                            TextureDimension::D2,
                                             image_buffer.into_raw(),
-                                            bevy::render::texture::TextureFormat::Rgba8UnormSrgb,
+                                            TextureFormat::Rgba8UnormSrgb,
                                         );
 
                                         let label = slice.label_with_nine_slice(key);
