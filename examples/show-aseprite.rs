@@ -3,7 +3,11 @@ use bevy_spicy_aseprite::{
     AsepriteAnimation, AsepriteAnimationState, AsepriteBundle, AsepritePlugin,
 };
 
+#[derive(Component, Clone, Copy, Debug)]
+struct CrowTag;
+
 mod sprites {
+    use bevy::prelude::Component;
     use bevy_spicy_aseprite::aseprite;
 
     aseprite!(pub Crow, "assets/crow.aseprite");
@@ -17,6 +21,7 @@ fn main() {
         .add_plugin(AsepritePlugin)
         .add_startup_system(setup)
         .add_system(toggle_sprite)
+        .add_system(change_animation)
         .run();
 }
 
@@ -41,7 +46,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         },
         ..Default::default()
-    });
+    }).insert(CrowTag);
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
@@ -127,6 +132,19 @@ fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAn
     if keys.just_pressed(KeyCode::Space) {
         for mut state in aseprites.iter_mut() {
             state.toggle();
+        }
+    }
+}
+
+fn change_animation(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAnimation, With<CrowTag>>) {
+    if keys.just_pressed(KeyCode::Key1) {
+        for mut crow_anim in aseprites.iter_mut() {
+            *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::GROOVE);
+        }
+    }
+    if keys.just_pressed(KeyCode::Key2) {
+        for mut crow_anim in aseprites.iter_mut() {
+            *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS);
         }
     }
 }

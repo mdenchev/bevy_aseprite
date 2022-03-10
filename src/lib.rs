@@ -141,19 +141,17 @@ fn switch_tag(
             continue;
         };
 
-        loop {
-            let (_current_frame_idx, _forward, rest_time) = match &mut *aseprite_animation_state {
-                AsepriteAnimationState::Paused { .. } => break,
-                AsepriteAnimationState::Playing {
-                    current_frame,
-                    forward,
-                    time_elapsed,
-                } => (current_frame, forward, time_elapsed),
-            };
+        let (current_frame_idx, _forward, rest_time) = match &mut *aseprite_animation_state {
+            AsepriteAnimationState::Paused { .. } => break,
+            AsepriteAnimationState::Playing {
+                current_frame,
+                forward,
+                time_elapsed,
+            } => (current_frame, forward, time_elapsed),
+        };
 
-            *rest_time = 0;
-            aseprite_animation.get_first_frame(image);
-        }
+        *rest_time = 0;
+        *current_frame_idx = aseprite_animation.get_first_frame(image);
     }
 }
 
