@@ -308,23 +308,24 @@ impl AsepriteInfo {
     }
 }
 
-// TODO this is not a great way to store this info
-// Should combine with AsepriteAnimationState
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AsepriteAnimationState {
+    Playing,
+    Paused
+}
+
 #[derive(Debug, Component, PartialEq, Eq)]
 /// An aseprite animation
-pub enum AsepriteAnimation {
-    /// The animation is defined as in this tag
-    Tag {
-        /// The tag defining the animation
-        tag: AsepriteTag,
-    },
-    /// No animation playing
-    None,
+pub struct AsepriteAnimation {
+    pub tag: Option<&'static str>,
+    pub state: AsepriteAnimationState,
+    pub current_frame: usize,
+    pub forward: bool,
+    pub time_elapsed: u64,
 }
 
 impl Default for AsepriteAnimation {
     fn default() -> Self {
-        Self::None
     }
 }
 
@@ -418,34 +419,7 @@ impl AsepriteAnimation {
     pub fn is_tag(&self, tag: AsepriteTag) -> bool {
         self == &Self::Tag { tag }
     }
-}
 
-impl From<AsepriteTag> for AsepriteAnimation {
-    fn from(tag: AsepriteTag) -> Self {
-        AsepriteAnimation::Tag { tag }
-    }
-}
-
-#[derive(Debug, Clone, Component)]
-/// Defines the current state of the animation
-///
-/// # Note
-///
-/// The default is stopped!
-#[allow(missing_docs)]
-pub enum AsepriteAnimationState {
-    Playing {
-        current_frame: usize,
-        forward: bool,
-        time_elapsed: u64,
-    },
-    Paused {
-        current_frame: usize,
-        forward: bool,
-    },
-}
-
-impl AsepriteAnimationState {
     /// Get the current frame to be shown
     pub fn get_current_frame(&self) -> usize {
         match self {
@@ -525,6 +499,12 @@ impl AsepriteAnimationState {
                 };
             }
         }
+    }
+}
+
+impl From<AsepriteTag> for AsepriteAnimation {
+    fn from(tag: AsepriteTag) -> Self {
+        AsepriteAnimation::Tag { tag }
     }
 }
 

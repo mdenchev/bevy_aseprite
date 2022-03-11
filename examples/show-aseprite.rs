@@ -37,16 +37,24 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     };
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(AsepriteBundle {
-        aseprite: sprites::Crow::sprite(),
-        animation: AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS),
-        transform: Transform {
-            scale: Vec3::splat(4.),
-            translation: Vec3::new(0., 150., 0.),
-            ..Default::default()
-        },
-        ..Default::default()
-    }).insert(CrowTag);
+    //commands.spawn_bundle(AsepriteBundle {
+    //    transform: Transform {
+    //        scale: Vec3::splat(4.),
+    //        translation: Vec3::new(0., 150., 0.),
+    //        ..Default::default()
+    //    },
+    //    ..sprites::Crow::bundle()
+    //}).insert(CrowTag);
+    let crow_transform = 
+    commands.spawn_bundle(sprites::Crow::bundle()
+        .transform( Transform {
+                scale: Vec3::splat(4.),
+                translation: Vec3::new(0., 150., 0.),
+                ..Default::default()
+            }
+        )
+        .tag(sprites::Crow::tags::FLAP_WINGS)
+    ).insert(CrowTag);
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             alignment: TextAlignment {

@@ -66,15 +66,23 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
                 }
             }
 
-            pub mod tags {
-                #( pub const #tag_names: ::bevy_aseprite::AsepriteTag = #tag_values; )*
+            pub fn bundle() -> ::bevy_aseprite::AsepriteBundle {
+                ::bevy_aseprite::AsepriteBundle {
+                    aseprite: ::bevy_aseprite::AsepriteInfo {
+                        path: ::std::path::PathBuf::from(#path),
+                    },
+                    ..Default::default()
+                }
+            }
+
+            pub enum Tags {
+                #( #tag_names(#tag_values) ),*
             }
 
             pub mod slices {
                 #( pub const #slice_names: ::bevy_aseprite::AsepriteSlice = #slice_values; )*
             }
         }
-
     };
 
     TokenStream::from(expanded)
