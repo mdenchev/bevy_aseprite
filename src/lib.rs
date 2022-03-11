@@ -22,6 +22,7 @@
 use std::ops::DerefMut;
 use std::path::{Path, PathBuf};
 
+use aseprite_reader2 as aseprite_reader;
 use aseprite_reader::{Aseprite, AsepriteSliceImage, NineSlice};
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
@@ -32,7 +33,7 @@ use bevy::{
 };
 
 use bevy::sprite::TextureAtlasBuilder;
-pub use bevy_spicy_aseprite_derive::aseprite;
+pub use bevy_aseprite_derive::aseprite;
 
 /// The required plugin to fully use your aseprite files
 pub struct AsepritePlugin;

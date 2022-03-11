@@ -1,4 +1,4 @@
-use aseprite_reader::Aseprite;
+use aseprite_reader2::Aseprite;
 use heck::ShoutySnekCase;
 use proc_macro::TokenStream;
 use proc_macro_error::abort;
@@ -43,7 +43,7 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
         .map(|tag| format_ident!("{}", tag.name.TO_SHOUTY_SNEK_CASE()));
     let tag_values = tags.all().map(|tag| {
         let tagname = &tag.name;
-        quote!(::bevy_spicy_aseprite::AsepriteTag::new( #tagname ))
+        quote!(::bevy_aseprite::AsepriteTag::new( #tagname ))
     });
 
     let slices = aseprite.slices();
@@ -54,24 +54,24 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
     let slice_values = slices.get_all().map(|slice| {
         let slice_name = &slice.name;
 
-        quote! {::bevy_spicy_aseprite::AsepriteSlice::new( #slice_name ) }
+        quote! {::bevy_aseprite::AsepriteSlice::new( #slice_name ) }
     });
 
     let expanded = quote! {
         #[allow(non_snake_case)]
         #vis mod #name {
-            pub fn sprite() -> ::bevy_spicy_aseprite::AsepriteInfo {
-                ::bevy_spicy_aseprite::AsepriteInfo {
+            pub fn sprite() -> ::bevy_aseprite::AsepriteInfo {
+                ::bevy_aseprite::AsepriteInfo {
                     path: ::std::path::PathBuf::from(#path),
                 }
             }
 
             pub mod tags {
-                #( pub const #tag_names: ::bevy_spicy_aseprite::AsepriteTag = #tag_values; )*
+                #( pub const #tag_names: ::bevy_aseprite::AsepriteTag = #tag_values; )*
             }
 
             pub mod slices {
-                #( pub const #slice_names: ::bevy_spicy_aseprite::AsepriteSlice = #slice_values; )*
+                #( pub const #slice_names: ::bevy_aseprite::AsepriteSlice = #slice_values; )*
             }
         }
 
