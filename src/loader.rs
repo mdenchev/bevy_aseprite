@@ -1,3 +1,4 @@
+use aseprite_reader2 as aseprite_reader;
 use aseprite_reader::{Aseprite, AsepriteSliceImage};
 use bevy::{asset::{AssetLoader, LoadedAsset, AssetServerSettings}, prelude::*, render::render_resource::{Extent3d, TextureDimension, TextureFormat}};
 

@@ -7,6 +7,7 @@ use std::ops::DerefMut;
 use std::path::{Path, PathBuf};
 
 use aseprite_reader::{Aseprite, AsepriteSliceImage, NineSlice};
+use aseprite_reader2 as aseprite_reader;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
@@ -16,7 +17,7 @@ use bevy::{
 };
 
 use bevy::sprite::TextureAtlasBuilder;
-pub use bevy_spicy_aseprite_derive::aseprite;
+pub use bevy_aseprite_derive::aseprite;
 use loader::{check_aseprite_data, load_aseprites, AsepriteLoader};
 
 /// The required plugin to fully use your aseprite files

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_spicy_aseprite::{
+use bevy_aseprite::{
     AsepriteAnimation, AsepriteAnimationState, AsepriteBundle, AsepritePlugin,
 };
 
@@ -8,7 +8,7 @@ struct CrowTag;
 
 mod sprites {
     use bevy::prelude::Component;
-    use bevy_spicy_aseprite::aseprite;
+    use bevy_aseprite::aseprite;
 
     aseprite!(pub Crow, "assets/crow.aseprite");
     //https://shubibubi.itch.io/cozy-people
