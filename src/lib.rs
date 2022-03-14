@@ -1,11 +1,13 @@
 #![allow(clippy::type_complexity)]
 #![doc = include_str!("../README.MD")]
 
+mod anim;
 mod loader;
 
 use std::ops::DerefMut;
 use std::path::{Path, PathBuf};
 
+use anim::{AsepriteAnimationState, AsepriteTag};
 use aseprite_reader::{Aseprite, AsepriteSliceImage, NineSlice};
 use aseprite_reader2 as aseprite_reader;
 use bevy::prelude::*;
@@ -16,7 +18,7 @@ use bevy::{
     utils::HashMap,
 };
 
-use bevy::sprite::TextureAtlasBuilder;
+pub use bevy::sprite::TextureAtlasBuilder;
 pub use bevy_aseprite_derive::aseprite;
 use loader::{check_aseprite_data, load_aseprites, AsepriteLoader};
 
@@ -40,45 +42,50 @@ impl Plugin for AsepritePlugin {
     }
 }
 
+macro_rules! take_or_continue {
+    ($opt:expr) => {
+        match $opt {
+            Some(val) => val,
+            None => continue,
+        }
+    };
+}
+
 fn update_animations(
     time: Res<Time>,
     aseprite_image_assets: Res<Assets<AsepriteImage>>,
     mut aseprites_query: Query<(
         &Handle<AsepriteImage>,
-        &AsepriteAnimation,
         &mut AsepriteAnimationState,
     )>,
 ) {
-    for (aseprite_handle, aseprite_animation, mut aseprite_animation_state) in
-        aseprites_query.iter_mut()
-    {
-        let image = if let Some(image) = aseprite_image_assets.get(aseprite_handle.clone_weak()) {
-            image
-        } else {
+    for (handle, mut anim_state) in aseprites_query.iter_mut() {
+        if anim_state.is_paused() {
             continue;
-        };
+        }
 
-        let mut added_time = Some(time.delta().as_millis() as u64);
+        let image = take_or_continue!(aseprite_image_assets.get(handle));
+        let mut delta_millis = Some(time.delta().as_millis() as u64);
 
         loop {
-            let (current_frame_idx, forward, rest_time) = match &mut *aseprite_animation_state {
-                AsepriteAnimationState::Paused { .. } => break,
-                AsepriteAnimationState::Playing {
-                    current_frame,
-                    forward,
-                    time_elapsed,
-                } => (current_frame, forward, time_elapsed),
-            };
+            // let (current_frame_idx, forward, rest_time) = match &mut *aseprite_animation_state {
+            //     AsepriteAnimationState::Paused { .. } => break,
+            //     AsepriteAnimationState::Playing {
+            //         current_frame,
+            //         forward,
+            //         time_elapsed,
+            //     } => (current_frame, forward, time_elapsed),
+            // };
 
             let frame_info =
-                if let Some(info) = image.aseprite.frame_infos().get(*current_frame_idx) {
+                if let Some(info) = image.aseprite.frame_infos().get(anim_state.current_frame) {
                     info
                 } else {
                     break;
                 };
 
-            if let Some(added_time) = added_time.take() {
-                *rest_time += added_time;
+            if let Some(added_time) = delta_millis.take() {
+                anim_state.time_elapsed += added_time;
             }
 
             if *rest_time >= frame_info.delay_ms as u64 {
@@ -101,17 +108,11 @@ fn update_animations(
 fn switch_tag(
     aseprite_image_assets: Res<Assets<AsepriteImage>>,
     mut aseprites_query: Query<
-        (
-            &Handle<AsepriteImage>,
-            &AsepriteAnimation,
-            &mut AsepriteAnimationState,
-        ),
+        (&Handle<AsepriteImage>, &mut AsepriteAnimation),
         Changed<AsepriteAnimation>,
     >,
 ) {
-    for (aseprite_handle, aseprite_animation, mut aseprite_animation_state) in
-        aseprites_query.iter_mut()
-    {
+    for (handle, mut animation) in aseprites_query.iter_mut() {
         let image = match aseprite_image_assets.get(aseprite_handle) {
             Some(image) => image,
             None => continue,
@@ -186,25 +187,6 @@ fn update_spritesheet_anim(
 
 #[derive(Component)]
 pub(crate) struct AsepriteSheetEntity(Entity);
-
-/// A tag representing an animation
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-pub struct AsepriteTag(&'static str);
-
-impl std::ops::Deref for AsepriteTag {
-    type Target = &'static str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl AsepriteTag {
-    /// Create a new tag
-    pub const fn new(id: &'static str) -> AsepriteTag {
-        AsepriteTag(id)
-    }
-}
 
 // TODO I don't think this is used anywhere currently.
 #[derive(Debug, Default, Copy, Clone)]
@@ -295,238 +277,13 @@ impl AsepriteImage {
     }
 }
 
-/// All the info about a specific aseprite
-#[derive(Debug, Default, Component)]
-pub struct AsepriteInfo {
-    /// The path to the aseprite file, relative to the crate root
-    pub path: PathBuf,
-}
-
-impl AsepriteInfo {
-    fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AsepriteAnimationState {
-    Playing,
-    Paused
-}
-
-#[derive(Debug, Component, PartialEq, Eq)]
-/// An aseprite animation
-pub struct AsepriteAnimation {
-    pub tag: Option<&'static str>,
-    pub state: AsepriteAnimationState,
-    pub current_frame: usize,
-    pub forward: bool,
-    pub time_elapsed: u64,
-}
-
-impl Default for AsepriteAnimation {
-    fn default() -> Self {
-    }
-}
-
-impl AsepriteAnimation {
-    /// Return the first frame of this tag
-    pub fn get_first_frame(&self, aseprite: &AsepriteImage) -> usize {
-        match self {
-            AsepriteAnimation::Tag {
-                tag: AsepriteTag(name),
-            } => {
-                let tags = aseprite.aseprite.tags();
-                let tag = match tags.get_by_name(name) {
-                    Some(tag) => tag,
-                    None => {
-                        error!("Tag {} wasn't found.", name);
-                        return 0;
-                    }
-                };
-
-                let range = tag.frames.clone();
-                range.start as usize
-            }
-            _ => 0,
-        }
-    }
-
-    /// Calculate the next frame from the current one
-    pub fn get_next_frame(
-        &self,
-        aseprite: &AsepriteImage,
-        current_frame: usize,
-        forward: bool,
-    ) -> (usize, bool) {
-        match self {
-            AsepriteAnimation::Tag {
-                tag: AsepriteTag(name),
-            } => {
-                let tags = aseprite.aseprite.tags();
-                let tag = match tags.get_by_name(name) {
-                    Some(tag) => tag,
-                    None => {
-                        error!("Tag {} wasn't found.", name);
-                        return (0, false);
-                    }
-                };
-
-                let range = tag.frames.clone();
-                match tag.animation_direction {
-                    aseprite_reader::raw::AsepriteAnimationDirection::Forward => {
-                        let next_frame = current_frame + 1;
-                        if range.contains(&(next_frame as u16)) {
-                            return (next_frame, false);
-                        } else {
-                            return (range.start as usize, false);
-                        }
-                    }
-                    aseprite_reader::raw::AsepriteAnimationDirection::Reverse => {
-                        let next_frame = current_frame.checked_sub(1);
-                        if let Some(next_frame) = next_frame {
-                            if range.contains(&(next_frame as u16)) {
-                                return (next_frame, false);
-                            }
-                        }
-                        return (range.end as usize, false);
-                    }
-                    aseprite_reader::raw::AsepriteAnimationDirection::PingPong => {
-                        if forward {
-                            let next_frame = current_frame + 1;
-                            if range.contains(&(next_frame as u16)) {
-                                return (next_frame, false);
-                            } else {
-                                return (next_frame.saturating_sub(1), true);
-                            }
-                        } else {
-                            let next_frame = current_frame.checked_sub(1);
-                            if let Some(next_frame) = next_frame {
-                                if range.contains(&(next_frame as u16)) {
-                                    return (next_frame, false);
-                                }
-                            }
-                            return (current_frame + 1, true);
-                        }
-                    }
-                }
-            }
-            AsepriteAnimation::None => (0, false),
-        }
-    }
-
-    /// Check if the current animation tag is the one provided
-    pub fn is_tag(&self, tag: AsepriteTag) -> bool {
-        self == &Self::Tag { tag }
-    }
-
-    /// Get the current frame to be shown
-    pub fn get_current_frame(&self) -> usize {
-        match self {
-            Self::Playing { current_frame, .. } => *current_frame,
-            Self::Paused {
-                current_frame: frame,
-                ..
-            } => *frame,
-        }
-    }
-
-    /// Start playing an animation
-    pub fn start(&mut self) {
-        match self {
-            AsepriteAnimationState::Playing { .. } => (),
-            AsepriteAnimationState::Paused {
-                current_frame,
-                forward,
-            } => {
-                *self = AsepriteAnimationState::Playing {
-                    current_frame: *current_frame,
-                    forward: *forward,
-                    time_elapsed: 0,
-                }
-            }
-        }
-    }
-
-    /// Pause the current animation
-    pub fn pause(&mut self) {
-        match self {
-            AsepriteAnimationState::Paused { .. } => (),
-            AsepriteAnimationState::Playing {
-                current_frame,
-                forward,
-                ..
-            } => {
-                *self = AsepriteAnimationState::Paused {
-                    current_frame: *current_frame,
-                    forward: *forward,
-                }
-            }
-        }
-    }
-
-    /// Returns `true` if the aseprite_animation_state is [`Playing`].
-    pub fn is_playing(&self) -> bool {
-        matches!(self, Self::Playing { .. })
-    }
-
-    /// Returns `true` if the aseprite_animation_state is [`Paused`].
-    pub fn is_paused(&self) -> bool {
-        matches!(self, Self::Paused { .. })
-    }
-
-    /// Toggle state between playing and pausing
-    pub fn toggle(&mut self) {
-        match self {
-            AsepriteAnimationState::Playing {
-                current_frame,
-                forward,
-                ..
-            } => {
-                *self = Self::Paused {
-                    current_frame: *current_frame,
-                    forward: *forward,
-                };
-            }
-            AsepriteAnimationState::Paused {
-                current_frame,
-                forward,
-            } => {
-                *self = Self::Playing {
-                    current_frame: *current_frame,
-                    forward: *forward,
-                    time_elapsed: 0,
-                };
-            }
-        }
-    }
-}
-
-impl From<AsepriteTag> for AsepriteAnimation {
-    fn from(tag: AsepriteTag) -> Self {
-        AsepriteAnimation::Tag { tag }
-    }
-}
-
-impl Default for AsepriteAnimationState {
-    fn default() -> Self {
-        AsepriteAnimationState::Playing {
-            current_frame: 0,
-            forward: true,
-            time_elapsed: 0,
-        }
-    }
-}
-
 /// A bundle defining a drawn aseprite
 #[derive(Debug, Bundle, Default)]
 pub struct AsepriteBundle {
     pub transform: Transform,
     pub global_transform: GlobalTransform,
-    // TODO what's the point of this?
-    pub aseprite: AsepriteInfo,
+    pub aseprite_path: AsepritePath,
     pub animation: AsepriteAnimation,
-    pub animation_state: AsepriteAnimationState,
     pub handle: Handle<AsepriteImage>,
 }
 

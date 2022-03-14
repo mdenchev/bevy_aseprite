@@ -1,8 +1,10 @@
+use std::path::{PathBuf, Path};
+
 use aseprite_reader2 as aseprite_reader;
 use aseprite_reader::{Aseprite, AsepriteSliceImage};
 use bevy::{asset::{AssetLoader, LoadedAsset, AssetServerSettings}, prelude::*, render::render_resource::{Extent3d, TextureDimension, TextureFormat}};
 
-use crate::{AsepriteSliceName, AsepriteSliceTextures, AsepriteImage, Atlas, AsepriteInfo, AsepriteSheetEntity, AsepriteAnimation};
+use crate::{AsepriteSliceName, AsepriteSliceTextures, AsepriteImage, Atlas, AsepriteSheetEntity, anim::AsepriteAnimationState};
 
 
 #[derive(Debug, Default)]
@@ -129,6 +131,7 @@ impl AssetLoader for AsepriteLoader {
     }
 }
 
+
 // TODO add support for hot reloading
 pub(crate) fn check_aseprite_data(
     mut commands: Commands,
@@ -143,7 +146,7 @@ pub(crate) fn check_aseprite_data(
             Option<&AsepriteSheetEntity>,
             &mut Handle<AsepriteImage>,
         ),
-        With<AsepriteAnimation>,
+        With<AsepriteAnimationState>,
     >,
 ) {
     for event in aseprite_image_events.iter() {
@@ -224,6 +227,15 @@ pub(crate) fn check_aseprite_data(
     }
 }
 
+/// The path for loading a sprite
+#[derive(Debug, Default, Component)]
+pub struct AsepritePath(PathBuf);
+
+impl AsepritePath {
+    fn path(&self) -> &Path {
+        &self.0.as_path()
+    }
+}
 
 // This is used so you don't need to load the aseprite when creating the bundle
 /* TODO maybe get rid of this? Though it does provide cool ergonomics as you
@@ -234,10 +246,10 @@ pub(crate) fn load_aseprites(
     mut commands: Commands,
     asset_server_settings_folder: Res<AssetServerSettings>,
     asset_server: Res<AssetServer>,
-    new_aseprites: Query<(Entity, &AsepriteInfo), Added<AsepriteInfo>>,
+    new_aseprites: Query<(Entity, &AsepritePath), Added<AsepritePath>>,
 ) {
-    for (entity, ase_info) in new_aseprites.iter() {
-        let path = ase_info
+    for (entity, ase_path) in new_aseprites.iter() {
+        let path = ase_path
             .path()
             .strip_prefix(&asset_server_settings_folder.asset_folder)
             .unwrap();

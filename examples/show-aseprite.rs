@@ -1,17 +1,19 @@
 use bevy::prelude::*;
-use bevy_aseprite::{
-    AsepriteAnimation, AsepriteAnimationState, AsepriteBundle, AsepritePlugin,
-};
+use bevy_aseprite::{anim::AsepriteAnimationState, AsepriteBundle, AsepritePlugin};
 
 #[derive(Component, Clone, Copy, Debug)]
 struct CrowTag;
+
+#[derive(Component, Clone, Copy, Debug)]
+struct PlayerTag;
 
 mod sprites {
     use bevy::prelude::Component;
     use bevy_aseprite::aseprite;
 
+    // https://meitdev.itch.io/crow
     aseprite!(pub Crow, "assets/crow.aseprite");
-    //https://shubibubi.itch.io/cozy-people
+    // https://shubibubi.itch.io/cozy-people
     aseprite!(pub Player, "assets/player.ase");
 }
 
@@ -37,24 +39,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     };
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    //commands.spawn_bundle(AsepriteBundle {
-    //    transform: Transform {
-    //        scale: Vec3::splat(4.),
-    //        translation: Vec3::new(0., 150., 0.),
-    //        ..Default::default()
-    //    },
-    //    ..sprites::Crow::bundle()
-    //}).insert(CrowTag);
-    let crow_transform = 
-    commands.spawn_bundle(sprites::Crow::bundle()
-        .transform( Transform {
+    commands
+        .spawn_bundle(AsepriteBundle {
+            transform: Transform {
                 scale: Vec3::splat(4.),
                 translation: Vec3::new(0., 150., 0.),
                 ..Default::default()
-            }
-        )
-        .tag(sprites::Crow::tags::FLAP_WINGS)
-    ).insert(CrowTag);
+            },
+            animation: AsepriteAnimationState::sprites::Crow::Tags::FLAP_WINGS,
+            ..sprites::Crow::bundle()
+        })
+        .insert(CrowTag);
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
@@ -89,16 +84,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         transform: Transform::from_translation(Vec3::new(0., 300., 0.)),
         ..Default::default()
     });
-    commands.spawn_bundle(AsepriteBundle {
-        aseprite: sprites::Player::sprite(),
-        animation: AsepriteAnimation::from(sprites::Player::tags::LEFT_WALK),
-        transform: Transform {
-            scale: Vec3::splat(4.),
-            translation: Vec3::new(0., -200., 0.),
+    commands
+        .spawn_bundle(AsepriteBundle {
+            aseprite_path: sprites::Player::sprite(),
+            animation: AsepriteAnimationState::from(sprites::Player::tags::LEFT_WALK),
+            transform: Transform {
+                scale: Vec3::splat(4.),
+                translation: Vec3::new(0., -200., 0.),
+                ..Default::default()
+            },
             ..Default::default()
-        },
-        ..Default::default()
-    });
+        })
+        .insert(PlayerTag);
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
@@ -134,7 +131,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 }
-// Made by https://meitdev.itch.io/crow
 
 fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAnimationState>) {
     if keys.just_pressed(KeyCode::Space) {
@@ -144,15 +140,18 @@ fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAn
     }
 }
 
-fn change_animation(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAnimation, With<CrowTag>>) {
+fn change_animation(
+    keys: Res<Input<KeyCode>>,
+    mut aseprites: Query<&mut AsepriteAnimationState, With<CrowTag>>,
+) {
     if keys.just_pressed(KeyCode::Key1) {
         for mut crow_anim in aseprites.iter_mut() {
-            *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::GROOVE);
+            *crow_anim = AsepriteAnimationState::from(sprites::Crow::tags::GROOVE);
         }
     }
     if keys.just_pressed(KeyCode::Key2) {
         for mut crow_anim in aseprites.iter_mut() {
-            *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS);
+            *crow_anim = AsepriteAnimationState::from(sprites::Crow::tags::FLAP_WINGS);
         }
     }
 }
