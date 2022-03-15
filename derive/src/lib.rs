@@ -46,17 +46,6 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
         quote!(::bevy_aseprite::AsepriteTag::new( #tagname ))
     });
 
-    let slices = aseprite.slices();
-
-    let slice_names = slices
-        .get_all()
-        .map(|slice| format_ident!("{}", slice.name.TO_SHOUTY_SNEK_CASE()));
-    let slice_values = slices.get_all().map(|slice| {
-        let slice_name = &slice.name;
-
-        quote! {::bevy_aseprite::AsepriteSlice::new( #slice_name ) }
-    });
-
     let expanded = quote! {
         #[allow(non_snake_case)]
         #vis mod #name {
@@ -77,10 +66,6 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
 
             pub enum Tags {
                 #( #tag_names(#tag_values) ),*
-            }
-
-            pub mod slices {
-                #( pub const #slice_names: ::bevy_aseprite::AsepriteSlice = #slice_values; )*
             }
         }
     };
