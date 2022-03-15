@@ -1,11 +1,16 @@
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 
-use aseprite_reader2 as aseprite_reader;
 use aseprite_reader::{Aseprite, AsepriteSliceImage};
-use bevy::{asset::{AssetLoader, LoadedAsset, AssetServerSettings}, prelude::*, render::render_resource::{Extent3d, TextureDimension, TextureFormat}};
+use aseprite_reader2 as aseprite_reader;
+use bevy::{
+    asset::{AssetLoader, AssetServerSettings, LoadedAsset},
+    prelude::*,
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+};
 
-use crate::{AsepriteSliceName, AsepriteSliceTextures, AsepriteImage, Atlas, AsepriteSheetEntity, anim::AsepriteAnimationState};
-
+use crate::{
+    anim::AnimState, AsepriteInfo, AsepriteSheetEntity,
+};
 
 #[derive(Debug, Default)]
 pub struct AsepriteLoader;
@@ -28,8 +33,6 @@ impl AssetLoader for AsepriteLoader {
 
             let mut aseprite_atlas = TextureAtlasBuilder::default();
 
-            let mut frame_textures = vec![];
-
             for (idx, image) in images.into_iter().enumerate() {
                 let texture = Image::new(
                     Extent3d {
@@ -46,81 +49,11 @@ impl AssetLoader for AsepriteLoader {
                     load_context.set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
 
                 aseprite_atlas.add_texture(texture_handle.clone(), &texture);
-                frame_textures.push(texture_handle);
             }
 
-            info!("Finished loading aseprite");
-
-            let slices = aseprite.slices();
-
-            let slice_textures = slices
-                .get_all()
-                .map(|slice| slice.name.clone())
-                .zip(
-                    slices
-                        .get_images(slices.get_all())?
-                        .into_iter()
-                        .zip(slices.get_all())
-                        .map(|(AsepriteSliceImage { image, nine_slices }, slice)| {
-                            let texture = Image::new(
-                                Extent3d {
-                                    width: image.width(),
-                                    height: image.height(),
-                                    depth_or_array_layers: 1,
-                                },
-                                TextureDimension::D2,
-                                image.into_raw(),
-                                TextureFormat::Rgba8UnormSrgb,
-                            );
-
-                            let label = slice.label();
-                            let texture_handle = load_context
-                                .set_labeled_asset(&label, LoadedAsset::new(texture.clone()));
-
-                            aseprite_atlas.add_texture(texture_handle.clone(), &texture);
-
-                            let nine_patch_handles = nine_slices.map(|nine_slices| {
-                                nine_slices
-                                    .into_iter()
-                                    .map(|(key, image_buffer)| {
-                                        let texture = Image::new(
-                                            Extent3d {
-                                                width: image_buffer.width(),
-                                                height: image_buffer.height(),
-                                                depth_or_array_layers: 1,
-                                            },
-                                            TextureDimension::D2,
-                                            image_buffer.into_raw(),
-                                            TextureFormat::Rgba8UnormSrgb,
-                                        );
-
-                                        let label = slice.label_with_nine_slice(key);
-                                        let texture_handle = load_context.set_labeled_asset(
-                                            &label,
-                                            LoadedAsset::new(texture.clone()),
-                                        );
-
-                                        aseprite_atlas
-                                            .add_texture(texture_handle.clone(), &texture);
-
-                                        (key, texture_handle)
-                                    })
-                                    .collect()
-                            });
-
-                            AsepriteSliceTextures {
-                                texture_handle,
-                                nine_patch_handles,
-                            }
-                        }),
-                )
-                .collect();
-
-            load_context.set_default_asset(LoadedAsset::new(AsepriteImage {
-                aseprite,
+            load_context.set_default_asset(LoadedAsset::new(
+                ,
                 atlas: Atlas::Builder(aseprite_atlas),
-                frames: frame_textures,
-                slices: slice_textures,
             }));
             Ok(())
         })
@@ -131,12 +64,11 @@ impl AssetLoader for AsepriteLoader {
     }
 }
 
-
 // TODO add support for hot reloading
 pub(crate) fn check_aseprite_data(
     mut commands: Commands,
-    mut aseprite_image_events: EventReader<AssetEvent<AsepriteImage>>,
-    mut aseprite_image_assets: ResMut<Assets<AsepriteImage>>,
+    mut aseprite_image_events: EventReader<AssetEvent<AsepriteInfo>>,
+    mut aseprite_image_assets: ResMut<Assets<AsepriteInfo>>,
     mut texture_assets: ResMut<Assets<Image>>,
     mut texture_atlas_assets: ResMut<Assets<TextureAtlas>>,
     mut existing_aseprites: Query<
@@ -144,9 +76,9 @@ pub(crate) fn check_aseprite_data(
             Entity,
             &Transform,
             Option<&AsepriteSheetEntity>,
-            &mut Handle<AsepriteImage>,
+            &mut Handle<AsepriteInfo>,
         ),
-        With<AsepriteAnimationState>,
+        With<AnimState>,
     >,
 ) {
     for event in aseprite_image_events.iter() {
@@ -254,7 +186,7 @@ pub(crate) fn load_aseprites(
             .strip_prefix(&asset_server_settings_folder.asset_folder)
             .unwrap();
 
-        let handle: Handle<AsepriteImage> = asset_server.load(path);
+        let handle: Handle<AsepriteInfo> = asset_server.load(path);
 
         commands.entity(entity).insert(handle);
     }

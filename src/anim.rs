@@ -1,7 +1,7 @@
 use aseprite_reader2 as aseprite_reader;
 use bevy::prelude::*;
 
-use crate::AsepriteImage;
+use crate::AsepriteInfo;
 
 /// A tag representing an animation
 #[derive(Debug, Default, Component, Copy, Clone, PartialEq, Eq)]
@@ -23,7 +23,7 @@ impl AsepriteTag {
 }
 
 #[derive(Debug, Default, Component, PartialEq, Eq)]
-pub struct AsepriteAnimationState {
+pub struct AnimState {
     pub is_playing: bool,
     pub tag: Option<&'static str>,
     pub current_frame: usize,
@@ -31,12 +31,12 @@ pub struct AsepriteAnimationState {
     pub time_elapsed: u64,
 }
 
-impl AsepriteAnimationState {
+impl AnimState {
     /// Return the first frame of the tag or 0 if no tag
-    pub fn get_first_frame(&self, aseprite: &AsepriteImage) -> usize {
+    pub fn get_first_frame(&self, aseprite: &AsepriteInfo) -> usize {
         match self.tag {
             Some(tag) => {
-                let tags = aseprite.aseprite.tags();
+                let tags = aseprite.info.tags();
                 let tag = match tags.get_by_name(tag) {
                     Some(tag) => tag,
                     None => {
@@ -52,10 +52,10 @@ impl AsepriteAnimationState {
         }
     }
 
-    fn next_frame(&mut self, aseprite: &AsepriteImage) {
+    fn next_frame(&mut self, aseprite: &AsepriteInfo) {
         match self.tag {
             Some(tag) => {
-                let tags = aseprite.aseprite.tags();
+                let tags = aseprite.info.tags();
                 let tag = match tags.get_by_name(tag) {
                     Some(tag) => tag,
                     None => {
@@ -113,7 +113,22 @@ impl AsepriteAnimationState {
         }
     }
 
-    pub fn update_animation(&mut self, aseprite: &AsepriteImage) {}
+    pub fn current_frame_duration(&self, ase: &AsepriteInfo) -> Duration {
+        let frame_info = ase.info.frame_duration(self.current_frame)
+    }
+
+    pub fn update(&mut self, aseprite: &AsepriteInfo, dt: Duration) {
+        self.time_elapsed += dt.as_millis();
+        while time_elapsed >= aseprite.frame_time()
+
+            let mut time_elapsed = ase_anim.time_elpased + delta_millis;
+            let mut current_frame = ase_anim.current_frame;
+            while time_elapsed >= frame_info.delay_ms {
+                time_elapsed -= frame_info.delay_ms;
+                current_frame
+            }
+
+    }
 
     /// Check if the current animation tag is the one provided
     //pub fn is_tag(&self, tag: &str) -> bool {
@@ -148,5 +163,16 @@ impl AsepriteAnimationState {
     /// Toggle state between playing and pausing
     pub fn toggle(&mut self) {
         self.is_playing = !self.is_playing;
+    }
+}
+
+
+pub(crate) fn update_animations(
+    time: Res<Time>,
+    ases: Res<Assets<AsepriteInfo>>,
+    mut aseprites_query: Query<(&Handle<AsepriteInfo>, &mut AnimState)>,
+) {
+    for (handle, mut anim_state) in aseprites_query.iter_mut() {
+        anim_state.update(ase, time.delta());
     }
 }

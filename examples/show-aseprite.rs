@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_aseprite::{anim::AsepriteAnimationState, AsepriteBundle, AsepritePlugin};
+use bevy_aseprite::{anim::AnimState, AsepriteBundle, AsepritePlugin};
 
 #[derive(Component, Clone, Copy, Debug)]
 struct CrowTag;
@@ -46,7 +46,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 translation: Vec3::new(0., 150., 0.),
                 ..Default::default()
             },
-            animation: AsepriteAnimationState::sprites::Crow::Tags::FLAP_WINGS,
+            animation: AnimState::sprites::Crow::Tags::FLAP_WINGS,
             ..sprites::Crow::bundle()
         })
         .insert(CrowTag);
@@ -87,7 +87,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(AsepriteBundle {
             aseprite_path: sprites::Player::sprite(),
-            animation: AsepriteAnimationState::from(sprites::Player::tags::LEFT_WALK),
+            animation: AnimState::from(sprites::Player::tags::LEFT_WALK),
             transform: Transform {
                 scale: Vec3::splat(4.),
                 translation: Vec3::new(0., -200., 0.),
@@ -132,7 +132,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAnimationState>) {
+fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AnimState>) {
     if keys.just_pressed(KeyCode::Space) {
         for mut state in aseprites.iter_mut() {
             state.toggle();
@@ -142,16 +142,16 @@ fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAn
 
 fn change_animation(
     keys: Res<Input<KeyCode>>,
-    mut aseprites: Query<&mut AsepriteAnimationState, With<CrowTag>>,
+    mut aseprites: Query<&mut AnimState, With<CrowTag>>,
 ) {
     if keys.just_pressed(KeyCode::Key1) {
         for mut crow_anim in aseprites.iter_mut() {
-            *crow_anim = AsepriteAnimationState::from(sprites::Crow::tags::GROOVE);
+            *crow_anim = AnimState::from(sprites::Crow::tags::GROOVE);
         }
     }
     if keys.just_pressed(KeyCode::Key2) {
         for mut crow_anim in aseprites.iter_mut() {
-            *crow_anim = AsepriteAnimationState::from(sprites::Crow::tags::FLAP_WINGS);
+            *crow_anim = AnimState::from(sprites::Crow::tags::FLAP_WINGS);
         }
     }
 }
