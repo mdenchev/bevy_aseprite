@@ -24,6 +24,7 @@ impl AssetLoader for AsepriteLoader {
             let aseprite = Aseprite {
                 data: Some(reader::Aseprite::from_bytes(bytes)?),
                 info: None,
+                frame_handles: vec![],
                 atlas: None,
             };
             load_context.set_default_asset(LoadedAsset::new(aseprite));
@@ -48,6 +49,17 @@ pub(crate) fn process_load(
         match event {
             AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
                 // Get the created/modified aseprite
+                match aseprites.get(handle) {
+                    Some(aseprite) => match aseprite.atlas.is_some() {
+                        true => continue,
+                        false => {}
+                    },
+                    None => {
+                        error!("Aseprite handle doesn't hold anything?");
+                        continue;
+                    }
+                }
+
                 let ase = match aseprites.get_mut(handle) {
                     Some(ase) => ase,
                     None => {
@@ -70,6 +82,7 @@ pub(crate) fn process_load(
                     .get_images()
                     .unwrap();
 
+                let mut frame_handles = vec![];
                 let mut atlas = TextureAtlasBuilder::default();
 
                 for (idx, image) in ase_images.into_iter().enumerate() {
@@ -85,6 +98,7 @@ pub(crate) fn process_load(
                     );
                     let label = format!("Frame{}", idx);
                     let texture_handle = images.add(texture.clone());
+                    frame_handles.push(texture_handle.as_weak());
 
                     atlas.add_texture(texture_handle, &texture);
                 }
@@ -96,10 +110,8 @@ pub(crate) fn process_load(
                     }
                 };
                 ase.info = Some(data.into());
+                ase.frame_handles = frame_handles;
                 ase.atlas = Some(atlas_handle);
-
-                //// If no sprite, add create and add as child of current entity
-                //info!("Finished inserting entities for aseprite");
             }
             AssetEvent::Removed { .. } => (),
         }
@@ -119,19 +131,27 @@ pub(crate) fn insert_sprite_sheet(
             &Handle<Aseprite>,
             &mut AsepriteAnimation,
         ),
-        Added<Handle<Aseprite>>,
+        Without<TextureAtlasSprite>,
     >,
 ) {
     for (entity, &transform, handle, anim) in query.iter_mut() {
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
-                error!("Aseprite handle invalid");
+                dbg!("Aseprite handle invalid");
                 continue;
             }
         };
+        let atlas = match aseprite.atlas.clone() {
+            Some(atlas) => atlas,
+            None => {
+                dbg!("Aseprite atlas not ready");
+                continue;
+            }
+        };
+        info!("Adding sprite sheet ");
         commands.entity(entity).insert_bundle(SpriteSheetBundle {
-            texture_atlas: aseprite.atlas.clone().unwrap(),
+            texture_atlas: atlas,
             transform,
             ..Default::default()
         });

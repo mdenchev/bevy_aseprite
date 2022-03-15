@@ -45,6 +45,7 @@ pub struct Aseprite {
     data: Option<reader::Aseprite>,
     // Info stores data such as tags and slices
     info: Option<AsepriteInfo>,
+    frame_handles: Vec<Handle<Image>>,
     // Atlas that gets built from the frame info of the aseprite file
     atlas: Option<Handle<TextureAtlas>>,
 }

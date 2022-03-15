@@ -42,6 +42,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(AsepriteBundle {
             aseprite: asset_server.load("crow.aseprite"),
+            //animation: AsepriteAnimation::tag("groove"),
+            animation: AsepriteAnimation::tag("flap_wings"),
             transform: Transform {
                 scale: Vec3::splat(4.),
                 translation: Vec3::new(0., 150., 0.),
@@ -146,7 +148,7 @@ fn change_animation(
 ) {
     if keys.just_pressed(KeyCode::Key1) {
         for mut crow_anim in aseprites.iter_mut() {
-            //*crow_anim = AsepriteAnimation::from(sprites::Crow::tags::GROOVE);
+            *crow_anim = AsepriteAnimation::tag("groove");
         }
     }
     if keys.just_pressed(KeyCode::Key2) {
