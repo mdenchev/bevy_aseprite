@@ -24,7 +24,7 @@ impl AssetLoader for AsepriteLoader {
             let aseprite = Aseprite {
                 data: Some(reader::Aseprite::from_bytes(bytes)?),
                 info: None,
-                frame_handles: vec![],
+                frame_to_idx: vec![],
                 atlas: None,
             };
             load_context.set_default_asset(LoadedAsset::new(aseprite));
@@ -102,15 +102,19 @@ pub(crate) fn process_load(
 
                     atlas.add_texture(texture_handle, &texture);
                 }
-                let atlas_handle = match atlas.finish(&mut *images) {
-                    Ok(atlas) => atlases.add(atlas),
+                let atlas = match atlas.finish(&mut *images) {
+                    Ok(atlas) => atlas,
                     Err(err) => {
                         error!("{:?}", err);
                         continue;
                     }
                 };
+                for handle in frame_handles {
+                    let atlas_idx = atlas.get_texture_index(&handle).unwrap();
+                    ase.frame_to_idx.push(atlas_idx);
+                }
+                let atlas_handle = atlases.add(atlas);
                 ase.info = Some(data.into());
-                ase.frame_handles = frame_handles;
                 ase.atlas = Some(atlas_handle);
             }
             AssetEvent::Removed { .. } => (),
