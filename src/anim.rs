@@ -35,25 +35,6 @@ pub struct AsepriteAnimation {
 }
 
 impl AsepriteAnimation {
-    /// Return the first frame of the tag or 0 if no tag
-    pub fn get_first_frame(&self, info: &AsepriteInfo) -> usize {
-        match &self.tag {
-            Some(tag) => {
-                let tag = match info.tags.get(tag) {
-                    Some(tag) => tag,
-                    None => {
-                        error!("Tag {} wasn't found.", tag);
-                        return 0;
-                    }
-                };
-
-                let range = tag.frames.clone();
-                range.start as usize
-            }
-            _ => 0,
-        }
-    }
-
     fn next_frame(&mut self, info: &AsepriteInfo) {
         match &self.tag {
             Some(tag) => {
@@ -188,20 +169,6 @@ pub(crate) fn update_animations(
                 continue;
             }
         };
-        let atlas_handle = match &aseprite.atlas {
-            Some(handle) => handle,
-            None => {
-                error!("Aseprite atlas is None");
-                continue;
-            }
-        };
-        let atlas = match atlases.get(atlas_handle) {
-            Some(atlas) => atlas,
-            None => {
-                error!("Aseprite atlas is None");
-                continue;
-            }
-        };
         if animation.update(info, time.delta()) {
             sprite.index = aseprite.frame_to_idx[animation.current_frame];
         }
@@ -227,21 +194,3 @@ impl From<String> for AsepriteAnimation {
 
     }
 }
-
-// impl Into<AsepriteAnimation> for &str {
-//     fn into(self) -> AsepriteAnimation {
-//         AsepriteAnimation {
-//             tag: Some(self.to_owned()),
-//             ..Default::default()
-//         }
-//     }
-// }
-
-// impl Into<AsepriteAnimation> for String {
-//     fn into(self) -> AsepriteAnimation {
-//         AsepriteAnimation {
-//             tag: Some(self),
-//             ..Default::default()
-//         }
-//     }
-// }

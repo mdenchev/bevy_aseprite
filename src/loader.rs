@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
+
 
 use bevy::{
-    asset::{AssetLoader, AssetServerSettings, LoadedAsset},
+    asset::{AssetLoader, LoadedAsset},
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
@@ -38,7 +38,7 @@ impl AssetLoader for AsepriteLoader {
 }
 
 pub(crate) fn process_load(
-    mut commands: Commands,
+    _commands: Commands,
     mut asset_events: EventReader<AssetEvent<Aseprite>>,
     mut aseprites: ResMut<Assets<Aseprite>>,
     mut images: ResMut<Assets<Image>>,
@@ -96,7 +96,7 @@ pub(crate) fn process_load(
                         image.into_raw(),
                         TextureFormat::Rgba8UnormSrgb,
                     );
-                    let label = format!("Frame{}", idx);
+                    let _label = format!("Frame{}", idx);
                     let texture_handle = images.add(texture.clone());
                     frame_handles.push(texture_handle.as_weak());
 
@@ -124,10 +124,10 @@ pub(crate) fn process_load(
 
 pub(crate) fn insert_sprite_sheet(
     mut commands: Commands,
-    mut asset_events: EventReader<AssetEvent<Aseprite>>,
-    mut aseprites: ResMut<Assets<Aseprite>>,
-    mut images: ResMut<Assets<Image>>,
-    mut atlases: ResMut<Assets<TextureAtlas>>,
+    _asset_events: EventReader<AssetEvent<Aseprite>>,
+    aseprites: ResMut<Assets<Aseprite>>,
+    _images: ResMut<Assets<Image>>,
+    _atlases: ResMut<Assets<TextureAtlas>>,
     mut query: Query<
         (
             Entity,
@@ -138,7 +138,7 @@ pub(crate) fn insert_sprite_sheet(
         Without<TextureAtlasSprite>,
     >,
 ) {
-    for (entity, &transform, handle, anim) in query.iter_mut() {
+    for (entity, &transform, handle, _anim) in query.iter_mut() {
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
