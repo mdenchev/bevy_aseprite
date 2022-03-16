@@ -121,7 +121,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     value: String::from(" on itch.io"),
                     style: TextStyle {
                         color: Color::WHITE,
-                        ..text_style.clone()
+                        ..text_style
                     },
                 },
             ],
