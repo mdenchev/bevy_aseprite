@@ -2,7 +2,7 @@
 name = "bevy_aseprite_derive"
 version = "0.1.0"
 description = "Bevy aseprite loader derive"
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
