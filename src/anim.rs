@@ -147,7 +147,7 @@ impl AsepriteAnimation {
 pub(crate) fn update_animations(
     time: Res<Time>,
     aseprites: Res<Assets<Aseprite>>,
-    atlases: Res<Assets<TextureAtlas>>,
+    _atlases: Res<Assets<TextureAtlas>>,
     mut aseprites_query: Query<(
         &Handle<Aseprite>,
         &mut AsepriteAnimation,
