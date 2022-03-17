@@ -63,7 +63,6 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
                 #( pub const #slice_names: &'static str = #slice_values; )*
             }
         }
-
     };
 
     TokenStream::from(expanded)
