@@ -4,6 +4,8 @@ This is a fork of TheNeikos/bevy_spicy_aseprite.
 
 Works with Bevy 0.6
 
+Add `bevy_aseprite = "0.1"` to your Cargo.toml.
+
 
 ## How to use it without derives
 
