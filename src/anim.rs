@@ -24,45 +24,32 @@ impl AsepriteTag {
     }
 }
 
-#[derive(Debug, Default, Component, PartialEq, Eq)]
+#[derive(Debug, Component, PartialEq, Eq)]
 pub struct AsepriteAnimation {
     pub is_playing: bool,
-    pub tag: Option<&'static str>,
+    tag: Option<String>,
     pub current_frame: usize,
-    pub forward: bool,
-    pub time_elapsed: Duration,
-    pub tag_changed: bool,
+    forward: bool,
+    time_elapsed: Duration,
+    tag_changed: bool,
+}
+
+impl Default for AsepriteAnimation {
+    fn default() -> Self {
+        Self {
+            is_playing: true,
+            tag: Default::default(),
+            current_frame: Default::default(),
+            forward: Default::default(),
+            time_elapsed: Default::default(),
+            tag_changed: Default::default(),
+        }
+    }
 }
 
 impl AsepriteAnimation {
-    pub fn tag(tag: &'static str) -> Self {
-        Self {
-            tag: Some(tag),
-            ..Default::default()
-        }
-    }
-
-    /// Return the first frame of the tag or 0 if no tag
-    pub fn get_first_frame(&self, info: &AsepriteInfo) -> usize {
-        match self.tag {
-            Some(tag) => {
-                let tag = match info.tags.get(tag) {
-                    Some(tag) => tag,
-                    None => {
-                        error!("Tag {} wasn't found.", tag);
-                        return 0;
-                    }
-                };
-
-                let range = tag.frames.clone();
-                range.start as usize
-            }
-            _ => 0,
-        }
-    }
-
     fn next_frame(&mut self, info: &AsepriteInfo) {
-        match self.tag {
+        match &self.tag {
             Some(tag) => {
                 let tag = match info.tags.get(tag) {
                     Some(tag) => tag,
@@ -73,7 +60,6 @@ impl AsepriteAnimation {
                 };
 
                 let range = tag.frames.clone();
-                dbg!(&range);
                 match tag.animation_direction {
                     reader::raw::AsepriteAnimationDirection::Forward => {
                         let next_frame = self.current_frame + 1;
@@ -92,7 +78,6 @@ impl AsepriteAnimation {
                                 self.current_frame = range.end as usize - 1;
                             }
                         } else {
-                            // TODO check -1 is correct
                             self.current_frame = range.end as usize - 1;
                         }
                     }
@@ -119,14 +104,12 @@ impl AsepriteAnimation {
                 }
             }
             None => {
-                dbg!(self.current_frame, info.frame_count);
                 self.current_frame = (self.current_frame + 1) % info.frame_count;
             }
         }
     }
 
     pub fn current_frame_duration(&self, info: &AsepriteInfo) -> Duration {
-        // TODO store delay ms as Durations?
         Duration::from_millis(info.frame_infos[self.current_frame].delay_ms as u64)
     }
 
@@ -140,13 +123,6 @@ impl AsepriteAnimation {
             current_frame_duration = self.current_frame_duration(info);
             frame_changed = true;
         }
-        dbg!(
-            dt,
-            self.time_elapsed,
-            current_frame_duration,
-            self.current_frame,
-            frame_changed
-        );
         frame_changed
     }
 
@@ -184,7 +160,6 @@ impl AsepriteAnimation {
 pub(crate) fn update_animations(
     time: Res<Time>,
     aseprites: Res<Assets<Aseprite>>,
-    atlases: Res<Assets<TextureAtlas>>,
     mut aseprites_query: Query<(
         &Handle<Aseprite>,
         &mut AsepriteAnimation,
@@ -192,6 +167,9 @@ pub(crate) fn update_animations(
     )>,
 ) {
     for (handle, mut animation, mut sprite) in aseprites_query.iter_mut() {
+        if animation.is_paused() {
+            continue;
+        }
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
@@ -206,22 +184,26 @@ pub(crate) fn update_animations(
                 continue;
             }
         };
-        let atlas_handle = match &aseprite.atlas {
-            Some(handle) => handle,
-            None => {
-                error!("Aseprite atlas is None");
-                continue;
-            }
-        };
-        let atlas = match atlases.get(atlas_handle) {
-            Some(atlas) => atlas,
-            None => {
-                error!("Aseprite atlas is None");
-                continue;
-            }
-        };
         if animation.update(info, time.delta()) {
-            sprite.index = atlas.get_texture_index(&aseprite.frame_handles[animation.current_frame]).unwrap();
+            sprite.index = aseprite.frame_to_idx[animation.current_frame];
+        }
+    }
+}
+
+impl From<&str> for AsepriteAnimation {
+    fn from(tag: &str) -> AsepriteAnimation {
+        AsepriteAnimation {
+            tag: Some(tag.to_owned()),
+            ..Default::default()
+        }
+    }
+}
+
+impl From<String> for AsepriteAnimation {
+    fn from(tag: String) -> AsepriteAnimation {
+        AsepriteAnimation {
+            tag: Some(tag),
+            ..Default::default()
         }
     }
 }

@@ -4,17 +4,10 @@
 pub mod anim;
 mod loader;
 
-use std::ops::DerefMut;
-use std::path::{Path, PathBuf};
-
-use anim::{AsepriteAnimation, AsepriteTag};
+use anim::AsepriteAnimation;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
-use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
-use bevy::{
-    asset::{AssetLoader, AssetServerSettings, LoadedAsset},
-    utils::HashMap,
-};
+
 use bevy_aseprite_reader as reader;
 
 pub use bevy::sprite::TextureAtlasBuilder;
@@ -26,7 +19,6 @@ pub struct AsepritePlugin;
 #[derive(Debug, SystemLabel, Clone, Hash, PartialEq, Eq)]
 enum AsepriteSystems {
     InsertSpriteSheet,
-    UpdateAnim,
 }
 
 impl Plugin for AsepritePlugin {
@@ -45,7 +37,9 @@ pub struct Aseprite {
     data: Option<reader::Aseprite>,
     // Info stores data such as tags and slices
     info: Option<AsepriteInfo>,
-    frame_handles: Vec<Handle<Image>>,
+    // TextureAtlasBuilder might shift the index order when building so
+    // we keep a mapping of frame# -> atlas index here
+    frame_to_idx: Vec<usize>,
     // Atlas that gets built from the frame info of the aseprite file
     atlas: Option<Handle<TextureAtlas>>,
 }

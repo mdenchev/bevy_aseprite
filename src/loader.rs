@@ -1,7 +1,5 @@
-use std::path::{Path, PathBuf};
-
 use bevy::{
-    asset::{AssetLoader, AssetServerSettings, LoadedAsset},
+    asset::{AssetLoader, LoadedAsset},
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
@@ -20,11 +18,11 @@ impl AssetLoader for AsepriteLoader {
         load_context: &'a mut bevy::asset::LoadContext,
     ) -> bevy::asset::BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
-            info!("Loading aseprite at {:?}", load_context.path());
+            debug!("Loading aseprite at {:?}", load_context.path());
             let aseprite = Aseprite {
                 data: Some(reader::Aseprite::from_bytes(bytes)?),
                 info: None,
-                frame_handles: vec![],
+                frame_to_idx: vec![],
                 atlas: None,
             };
             load_context.set_default_asset(LoadedAsset::new(aseprite));
@@ -38,14 +36,12 @@ impl AssetLoader for AsepriteLoader {
 }
 
 pub(crate) fn process_load(
-    mut commands: Commands,
     mut asset_events: EventReader<AssetEvent<Aseprite>>,
     mut aseprites: ResMut<Assets<Aseprite>>,
     mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     for event in asset_events.iter() {
-        dbg!(&event);
         match event {
             AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
                 // Get the created/modified aseprite
@@ -96,21 +92,25 @@ pub(crate) fn process_load(
                         image.into_raw(),
                         TextureFormat::Rgba8UnormSrgb,
                     );
-                    let label = format!("Frame{}", idx);
+                    let _label = format!("Frame{}", idx);
                     let texture_handle = images.add(texture.clone());
                     frame_handles.push(texture_handle.as_weak());
 
                     atlas.add_texture(texture_handle, &texture);
                 }
-                let atlas_handle = match atlas.finish(&mut *images) {
-                    Ok(atlas) => atlases.add(atlas),
+                let atlas = match atlas.finish(&mut *images) {
+                    Ok(atlas) => atlas,
                     Err(err) => {
                         error!("{:?}", err);
                         continue;
                     }
                 };
+                for handle in frame_handles {
+                    let atlas_idx = atlas.get_texture_index(&handle).unwrap();
+                    ase.frame_to_idx.push(atlas_idx);
+                }
+                let atlas_handle = atlases.add(atlas);
                 ase.info = Some(data.into());
-                ase.frame_handles = frame_handles;
                 ase.atlas = Some(atlas_handle);
             }
             AssetEvent::Removed { .. } => (),
@@ -120,10 +120,7 @@ pub(crate) fn process_load(
 
 pub(crate) fn insert_sprite_sheet(
     mut commands: Commands,
-    mut asset_events: EventReader<AssetEvent<Aseprite>>,
-    mut aseprites: ResMut<Assets<Aseprite>>,
-    mut images: ResMut<Assets<Image>>,
-    mut atlases: ResMut<Assets<TextureAtlas>>,
+    aseprites: ResMut<Assets<Aseprite>>,
     mut query: Query<
         (
             Entity,
@@ -134,22 +131,23 @@ pub(crate) fn insert_sprite_sheet(
         Without<TextureAtlasSprite>,
     >,
 ) {
-    for (entity, &transform, handle, anim) in query.iter_mut() {
+    for (entity, &transform, handle, _anim) in query.iter_mut() {
+        // FIXME The first time the query runs the aseprite atlas might not be ready
+        // so failing to find it is expected.
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
-                dbg!("Aseprite handle invalid");
+                debug!("Aseprite handle invalid");
                 continue;
             }
         };
         let atlas = match aseprite.atlas.clone() {
             Some(atlas) => atlas,
             None => {
-                dbg!("Aseprite atlas not ready");
+                debug!("Aseprite atlas not ready");
                 continue;
             }
         };
-        info!("Adding sprite sheet ");
         commands.entity(entity).insert_bundle(SpriteSheetBundle {
             texture_atlas: atlas,
             transform,

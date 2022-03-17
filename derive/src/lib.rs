@@ -1,5 +1,5 @@
-use aseprite_reader2::Aseprite;
-use heck::ShoutySnekCase;
+use bevy_aseprite_reader::Aseprite;
+use heck::ToShoutySnekCase;
 use proc_macro::TokenStream;
 use proc_macro_error::abort;
 use proc_macro_error::proc_macro_error;
@@ -30,7 +30,7 @@ impl Parse for AsepriteDeclaration {
 pub fn aseprite(input: TokenStream) -> TokenStream {
     let AsepriteDeclaration { vis, name, path } = parse_macro_input!(input as AsepriteDeclaration);
 
-    let aseprite = match Aseprite::from_path(path.value()) {
+    let aseprite = match Aseprite::from_path(format!("assets/{}", path.value())) {
         Ok(aseprite) => aseprite,
         Err(err) => {
             abort!(path, "Could not load file."; note = err);
@@ -41,31 +41,26 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
     let tag_names = tags
         .all()
         .map(|tag| format_ident!("{}", tag.name.TO_SHOUTY_SNEK_CASE()));
-    let tag_values = tags.all().map(|tag| {
-        let tagname = &tag.name;
-        quote!(::bevy_aseprite::AsepriteTag::new( #tagname ))
-    });
+    let tag_values = tags.all().map(|tag| &tag.name);
+
+    let slices = aseprite.slices();
+
+    let slice_names = slices
+        .get_all()
+        .map(|slice| format_ident!("{}", slice.name.TO_SHOUTY_SNEK_CASE()));
+    let slice_values = slices.get_all().map(|slice| &slice.name);
 
     let expanded = quote! {
         #[allow(non_snake_case)]
         #vis mod #name {
-            pub fn sprite() -> ::bevy_aseprite::AsepriteInfo {
-                ::bevy_aseprite::AsepriteInfo {
-                    path: ::std::path::PathBuf::from(#path),
-                }
+            pub const PATH: &'static str = #path;
+
+            pub mod tags {
+                #( pub const #tag_names: &'static str = #tag_values; )*
             }
 
-            pub fn bundle() -> ::bevy_aseprite::AsepriteBundle {
-                ::bevy_aseprite::AsepriteBundle {
-                    aseprite: ::bevy_aseprite::AsepriteInfo {
-                        path: ::std::path::PathBuf::from(#path),
-                    },
-                    ..Default::default()
-                }
-            }
-
-            pub enum Tags {
-                #( #tag_names(#tag_values) ),*
+            pub mod slices {
+                #( pub const #slice_names: &'static str = #slice_values; )*
             }
         }
     };
