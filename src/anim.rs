@@ -24,7 +24,7 @@ impl AsepriteTag {
     }
 }
 
-#[derive(Debug, Default, Component, PartialEq, Eq)]
+#[derive(Debug, Component, PartialEq, Eq)]
 pub struct AsepriteAnimation {
     pub is_playing: bool,
     tag: Option<String>,
@@ -32,6 +32,19 @@ pub struct AsepriteAnimation {
     forward: bool,
     time_elapsed: Duration,
     tag_changed: bool,
+}
+
+impl Default for AsepriteAnimation {
+    fn default() -> Self {
+        Self {
+            is_playing: true,
+            tag: Default::default(),
+            current_frame: Default::default(),
+            forward: Default::default(),
+            time_elapsed: Default::default(),
+            tag_changed: Default::default(),
+        }
+    }
 }
 
 impl AsepriteAnimation {
@@ -147,7 +160,6 @@ impl AsepriteAnimation {
 pub(crate) fn update_animations(
     time: Res<Time>,
     aseprites: Res<Assets<Aseprite>>,
-    _atlases: Res<Assets<TextureAtlas>>,
     mut aseprites_query: Query<(
         &Handle<Aseprite>,
         &mut AsepriteAnimation,
@@ -155,6 +167,9 @@ pub(crate) fn update_animations(
     )>,
 ) {
     for (handle, mut animation, mut sprite) in aseprites_query.iter_mut() {
+        if animation.is_paused() {
+            continue;
+        }
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
@@ -181,7 +196,6 @@ impl From<&str> for AsepriteAnimation {
             tag: Some(tag.to_owned()),
             ..Default::default()
         }
-
     }
 }
 
@@ -191,6 +205,5 @@ impl From<String> for AsepriteAnimation {
             tag: Some(tag),
             ..Default::default()
         }
-
     }
 }
