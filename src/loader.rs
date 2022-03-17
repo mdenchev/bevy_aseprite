@@ -1,5 +1,3 @@
-
-
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
     prelude::*,
@@ -20,7 +18,7 @@ impl AssetLoader for AsepriteLoader {
         load_context: &'a mut bevy::asset::LoadContext,
     ) -> bevy::asset::BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
-            info!("Loading aseprite at {:?}", load_context.path());
+            debug!("Loading aseprite at {:?}", load_context.path());
             let aseprite = Aseprite {
                 data: Some(reader::Aseprite::from_bytes(bytes)?),
                 info: None,
@@ -38,14 +36,12 @@ impl AssetLoader for AsepriteLoader {
 }
 
 pub(crate) fn process_load(
-    _commands: Commands,
     mut asset_events: EventReader<AssetEvent<Aseprite>>,
     mut aseprites: ResMut<Assets<Aseprite>>,
     mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     for event in asset_events.iter() {
-        dbg!(&event);
         match event {
             AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
                 // Get the created/modified aseprite
@@ -124,10 +120,7 @@ pub(crate) fn process_load(
 
 pub(crate) fn insert_sprite_sheet(
     mut commands: Commands,
-    _asset_events: EventReader<AssetEvent<Aseprite>>,
     aseprites: ResMut<Assets<Aseprite>>,
-    _images: ResMut<Assets<Image>>,
-    _atlases: ResMut<Assets<TextureAtlas>>,
     mut query: Query<
         (
             Entity,
@@ -139,21 +132,22 @@ pub(crate) fn insert_sprite_sheet(
     >,
 ) {
     for (entity, &transform, handle, _anim) in query.iter_mut() {
+        // FIXME The first time the query runs the aseprite atlas might not be ready
+        // so failing to find it is expected.
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
-                dbg!("Aseprite handle invalid");
+                debug!("Aseprite handle invalid");
                 continue;
             }
         };
         let atlas = match aseprite.atlas.clone() {
             Some(atlas) => atlas,
             None => {
-                dbg!("Aseprite atlas not ready");
+                debug!("Aseprite atlas not ready");
                 continue;
             }
         };
-        info!("Adding sprite sheet ");
         commands.entity(entity).insert_bundle(SpriteSheetBundle {
             texture_atlas: atlas,
             transform,

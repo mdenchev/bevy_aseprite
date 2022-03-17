@@ -30,7 +30,7 @@ impl Parse for AsepriteDeclaration {
 pub fn aseprite(input: TokenStream) -> TokenStream {
     let AsepriteDeclaration { vis, name, path } = parse_macro_input!(input as AsepriteDeclaration);
 
-    let aseprite = match Aseprite::from_path(path.value()) {
+    let aseprite = match Aseprite::from_path(format!("assets/{}", path.value())) {
         Ok(aseprite) => aseprite,
         Err(err) => {
             abort!(path, "Could not load file."; note = err);
@@ -53,9 +53,7 @@ pub fn aseprite(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #[allow(non_snake_case)]
         #vis mod #name {
-            pub fn path() -> ::std::path::PathBuf {
-                ::std::path::PathBuf::from(#path)
-            }
+            pub const PATH: &'static str = #path;
 
             pub mod tags {
                 #( pub const #tag_names: &'static str = #tag_values; )*
