@@ -1,0 +1,17 @@
+[package]
+name = "bevy_aseprite_reader"
+authors = ["Neikos <neikos@neikos.email>", "Michail Denchev <mdenchev@gmail.com>"]
+version = "0.1.0"
+description = "Aseprite reader"
+edition = "2021"
+license = "Apache-2.0"
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+flate2 = "1.0.20"
+image = { version = "0.24.1", default-features = false }
+nom = "7.1.0"
+thiserror = "1.0.26"
+tracing = "0.1.26"
