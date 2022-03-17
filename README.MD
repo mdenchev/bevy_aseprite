@@ -44,3 +44,7 @@ Check out the example to see how it could be used:
 ```bash
 cargo run --example show_aseprite
 ```
+
+## Limitations
+
+Currently no support for slices or toggling layers.
