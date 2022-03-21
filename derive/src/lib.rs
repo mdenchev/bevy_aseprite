@@ -12,6 +12,7 @@ struct AsepriteDeclaration {
     vis: Visibility,
     name: Ident,
     path: LitStr,
+    prefix_path: Option<LitStr>,
 }
 
 impl Parse for AsepriteDeclaration {
@@ -20,17 +21,36 @@ impl Parse for AsepriteDeclaration {
         let name: Ident = input.parse()?;
         input.parse::<Token!(,)>()?;
         let path: LitStr = input.parse()?;
+        let prefix_path: Option<LitStr> = match input.parse::<Token!(,)>() {
+            Ok(_) => Some(input.parse()?),
+            Err(_) => None,
+        };
 
-        Ok(AsepriteDeclaration { vis, name, path })
+        Ok(AsepriteDeclaration {
+            vis,
+            name,
+            path,
+            prefix_path,
+        })
     }
 }
 
 #[proc_macro]
 #[proc_macro_error]
 pub fn aseprite(input: TokenStream) -> TokenStream {
-    let AsepriteDeclaration { vis, name, path } = parse_macro_input!(input as AsepriteDeclaration);
+    let AsepriteDeclaration {
+        vis,
+        name,
+        path,
+        prefix_path,
+    } = parse_macro_input!(input as AsepriteDeclaration);
 
-    let aseprite = match Aseprite::from_path(format!("assets/{}", path.value())) {
+    let prefix = match prefix_path {
+        Some(path) => format!("{}/", path.value()),
+        None => String::default(),
+    };
+
+    let aseprite = match Aseprite::from_path(format!("{}assets/{}", prefix, path.value())) {
         Ok(aseprite) => aseprite,
         Err(err) => {
             abort!(path, "Could not load file."; note = err);
