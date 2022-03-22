@@ -33,8 +33,8 @@ impl Plugin for AsepritePlugin {
 #[derive(Debug, Clone, TypeUuid)]
 #[uuid = "b29abc81-6179-42e4-b696-3a5a52f44f73"]
 pub struct Aseprite {
-    // Data is dropped after the atlas is built
-    data: Option<reader::Aseprite>,
+    // Path to the aseprite file
+    path: String, 
     // Info stores data such as tags and slices
     info: Option<AsepriteInfo>,
     // TextureAtlasBuilder might shift the index order when building so

@@ -20,7 +20,11 @@ impl AssetLoader for AsepriteLoader {
         Box::pin(async move {
             debug!("Loading aseprite at {:?}", load_context.path());
             let aseprite = Aseprite {
-                data: Some(reader::Aseprite::from_bytes(bytes)?),
+                path: load_context
+                    .path()
+                    .to_str()
+                    .expect("Path is not valid unicode")
+                    .to_owned(),
                 info: None,
                 frame_to_idx: vec![],
                 atlas: None,
@@ -40,11 +44,13 @@ pub(crate) fn process_load(
     mut aseprites: ResMut<Assets<Aseprite>>,
     mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
+    mut existing: Query<&mut Handle<TextureAtlas>, With<AsepriteAnimation>>,
 ) {
     for event in asset_events.iter() {
+        dbg!(event);
         match event {
             AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
-                // Get the created/modified aseprite
+                // Check for existince immutable so as not to trigger a Modified event
                 match aseprites.get(handle) {
                     Some(aseprite) => match aseprite.atlas.is_some() {
                         true => continue,
@@ -56,6 +62,7 @@ pub(crate) fn process_load(
                     }
                 }
 
+                // Get the created/modified aseprite
                 let ase = match aseprites.get_mut(handle) {
                     Some(ase) => ase,
                     None => {
@@ -63,10 +70,14 @@ pub(crate) fn process_load(
                         continue;
                     }
                 };
-                let data = match ase.data.take() {
-                    Some(data) => data,
-                    None => {
-                        error!("Ase data is empty");
+
+                let data = match reader::Aseprite::from_path(format!("assets/{}", &ase.path)) {
+                    Ok(data) => data,
+                    Err(err) => {
+                        error!(
+                            "Failed to load aseprite file {}. Reason: {}",
+                            &ase.path, err
+                        );
                         continue;
                     }
                 };
@@ -110,8 +121,20 @@ pub(crate) fn process_load(
                     ase.frame_to_idx.push(atlas_idx);
                 }
                 let atlas_handle = atlases.add(atlas);
+
+                // Updating any existing TextureAtlasSprites
+                if let Some(prev_atlas_handle) = &ase.atlas {
+                    dbg!("eists");
+                    for mut cur_atlas_handle in existing.iter_mut() {
+                        if &*cur_atlas_handle == prev_atlas_handle {
+                            dbg!("match");
+                            *cur_atlas_handle = atlas_handle.clone();
+                        }
+                    }
+                }
+
                 ase.info = Some(data.into());
-                ase.atlas = Some(atlas_handle);
+                ase.atlas = Some(atlas_handle.clone());
             }
             AssetEvent::Removed { .. } => (),
         }
