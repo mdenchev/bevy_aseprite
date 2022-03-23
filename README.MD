@@ -4,6 +4,8 @@ This is a fork of TheNeikos/bevy_spicy_aseprite.
 
 Works with Bevy 0.6
 
+Add `bevy_aseprite = "0.1"` to your Cargo.toml.
+
 
 ## How to use it without derives
 
@@ -42,3 +44,7 @@ Check out the example to see how it could be used:
 ```bash
 cargo run --example show_aseprite
 ```
+
+## Limitations
+
+Currently no support for slices or toggling layers.

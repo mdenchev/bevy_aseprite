@@ -42,12 +42,44 @@ impl Default for AsepriteAnimation {
             current_frame: Default::default(),
             forward: Default::default(),
             time_elapsed: Default::default(),
-            tag_changed: Default::default(),
+            tag_changed: true,
         }
     }
 }
 
 impl AsepriteAnimation {
+    fn reset(&mut self, info: &AsepriteInfo) {
+        self.tag_changed = false;
+        match &self.tag {
+            Some(tag) => {
+                let tag = match info.tags.get(tag) {
+                    Some(tag) => tag,
+                    None => {
+                        error!("Tag {} wasn't found.", tag);
+                        return;
+                    }
+                };
+
+                let range = tag.frames.clone();
+                use reader::raw::AsepriteAnimationDirection;
+                match tag.animation_direction {
+                    AsepriteAnimationDirection::Forward | AsepriteAnimationDirection::PingPong => {
+                        self.current_frame = range.start as usize;
+                        self.forward = true;
+                    }
+                    AsepriteAnimationDirection::Reverse => {
+                        self.current_frame = range.end as usize - 1;
+                        self.forward = false;
+                    }
+                }
+            }
+            None => {
+                self.current_frame = 0;
+                self.forward = true;
+            }
+        }
+    }
+
     fn next_frame(&mut self, info: &AsepriteInfo) {
         match &self.tag {
             Some(tag) => {
@@ -113,7 +145,17 @@ impl AsepriteAnimation {
         Duration::from_millis(info.frame_infos[self.current_frame].delay_ms as u64)
     }
 
+    // Returns whether the frame was changed
     pub fn update(&mut self, info: &AsepriteInfo, dt: Duration) -> bool {
+        if self.tag_changed {
+            self.reset(info);
+            return true;
+        }
+
+        if self.is_paused() {
+            return false;
+        }
+
         self.time_elapsed += dt;
         let mut current_frame_duration = self.current_frame_duration(info);
         let mut frame_changed = false;
@@ -167,9 +209,6 @@ pub(crate) fn update_animations(
     )>,
 ) {
     for (handle, mut animation, mut sprite) in aseprites_query.iter_mut() {
-        if animation.is_paused() {
-            continue;
-        }
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
