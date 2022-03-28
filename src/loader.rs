@@ -6,7 +6,7 @@ use bevy::{
 
 use bevy_aseprite_reader as reader;
 
-use crate::{anim::AsepriteAnimation, Aseprite};
+use crate::{anim::AsepriteAnimation, Aseprite, AsepritePath, PathToAseH};
 
 #[derive(Debug, Default)]
 pub struct AsepriteLoader;
@@ -19,17 +19,14 @@ impl AssetLoader for AsepriteLoader {
     ) -> bevy::asset::BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
             debug!("Loading aseprite at {:?}", load_context.path());
-            let aseprite = Aseprite {
+            let aseprite_path = AsepritePath {
                 path: load_context
                     .path()
                     .to_str()
                     .expect("Path is not valid unicode")
                     .to_owned(),
-                info: None,
-                frame_to_idx: vec![],
-                atlas: None,
             };
-            load_context.set_default_asset(LoadedAsset::new(aseprite));
+            load_context.set_default_asset(LoadedAsset::new(aseprite_path));
             Ok(())
         })
     }
@@ -39,50 +36,43 @@ impl AssetLoader for AsepriteLoader {
     }
 }
 
+/// The actual loading happens on AssetEvents.
 pub(crate) fn process_load(
-    mut asset_events: EventReader<AssetEvent<Aseprite>>,
+    mut asset_events: EventReader<AssetEvent<AsepritePath>>,
+    mut path_to_ase_h: ResMut<PathToAseH>,
+    aseprite_paths: Res<Assets<AsepritePath>>,
     mut aseprites: ResMut<Assets<Aseprite>>,
     mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
     mut existing: Query<&mut Handle<TextureAtlas>, With<AsepriteAnimation>>,
 ) {
     for event in asset_events.iter() {
-        dbg!(event);
         match event {
             AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
-                // Check for existince immutable so as not to trigger a Modified event
-                match aseprites.get(handle) {
-                    Some(aseprite) => match aseprite.atlas.is_some() {
-                        true => continue,
-                        false => {}
-                    },
-                    None => {
-                        error!("Aseprite handle doesn't hold anything?");
-                        continue;
-                    }
-                }
+                let path_handle = handle;
 
-                // Get the created/modified aseprite
-                let ase = match aseprites.get_mut(handle) {
-                    Some(ase) => ase,
+                let aseprite_path = match aseprite_paths.get(path_handle) {
+                    Some(aseprite_path) => aseprite_path,
                     None => {
-                        error!("Aseprite handle doesn't hold anything?");
+                        error!("AsepritePath handle doesn't hold anything");
                         continue;
                     }
                 };
 
-                let data = match reader::Aseprite::from_path(format!("assets/{}", &ase.path)) {
-                    Ok(data) => data,
-                    Err(err) => {
-                        error!(
-                            "Failed to load aseprite file {}. Reason: {}",
-                            &ase.path, err
-                        );
-                        continue;
-                    }
-                };
+                let data =
+                    match reader::Aseprite::from_path(format!("assets/{}", &aseprite_path.path)) {
+                        Ok(data) => data,
+                        Err(err) => {
+                            error!(
+                                "Failed to load aseprite file {}. Reason: {}",
+                                &aseprite_path.path, err
+                            );
+                            continue;
+                        }
+                    };
 
                 // Build out texture atlas
+                let mut frame_to_idx = vec![];
                 let frames = data.frames();
                 let ase_images = frames
                     .get_for(&(0..frames.count() as u16))
@@ -118,23 +108,53 @@ pub(crate) fn process_load(
                 };
                 for handle in frame_handles {
                     let atlas_idx = atlas.get_texture_index(&handle).unwrap();
-                    ase.frame_to_idx.push(atlas_idx);
+                    frame_to_idx.push(atlas_idx);
                 }
                 let atlas_handle = atlases.add(atlas);
 
+                let aseprite_handle = aseprites.add(Aseprite {
+                    info: data.into(),
+                    frame_to_idx,
+                    atlas: atlas_handle,
+                });
+                path_to_ase_h
+                    .0
+                    .insert(aseprite_path.path.clone(), aseprite_handle);
+            },
+            AssetEvent::Removed { .. } => {
+                // todo
+                dbg!("Removed");
+            }
+        };
+
+        match event {
+            AssetEvent::Modified { handle } => {
+                // NEW
+                // Get the created/modified aseprite
+                let ase = match aseprites.get_mut(path_handle) {
+                    Some(ase) => ase,
+                    None => {
+                        error!("Aseprite handle doesn't hold anything");
+                        continue;
+                    }
+                };
+
                 // Updating any existing TextureAtlasSprites
-                if let Some(prev_atlas_handle) = &ase.atlas {
-                    dbg!("eists");
-                    for mut cur_atlas_handle in existing.iter_mut() {
-                        if &*cur_atlas_handle == prev_atlas_handle {
-                            dbg!("match");
-                            *cur_atlas_handle = atlas_handle.clone();
-                        }
+                let prev_atlas_handle = &ase.atlas;
+                for mut cur_atlas_handle in existing.iter_mut() {
+                    if &*cur_atlas_handle == prev_atlas_handle {
+                        dbg!("match");
+                        *cur_atlas_handle = atlas_handle.clone();
                     }
                 }
 
-                ase.info = Some(data.into());
-                ase.atlas = Some(atlas_handle.clone());
+                //let ase = match path_to_ase.0.get(&aseprite_path.path) {
+                //    Some(ase_h) => todo!(),
+                //    None => {
+                //        error!("AsepritePath handle doesn't hold anything");
+                //        continue;
+                //    }
+                //};
             }
             AssetEvent::Removed { .. } => (),
         }
@@ -143,38 +163,40 @@ pub(crate) fn process_load(
 
 pub(crate) fn insert_sprite_sheet(
     mut commands: Commands,
-    aseprites: ResMut<Assets<Aseprite>>,
-    mut query: Query<
-        (
-            Entity,
-            &Transform,
-            &Handle<Aseprite>,
-            &mut AsepriteAnimation,
-        ),
-        Without<TextureAtlasSprite>,
-    >,
+    aseprite_paths: Res<Assets<AsepritePath>>,
+    mut path_to_ase_h: ResMut<PathToAseH>,
+    aseprites: Res<Assets<Aseprite>>,
+    mut query: Query<(Entity, &Transform, &Handle<AsepritePath>), Without<TextureAtlasSprite>>,
 ) {
-    for (entity, &transform, handle, _anim) in query.iter_mut() {
-        // FIXME The first time the query runs the aseprite atlas might not be ready
-        // so failing to find it is expected.
-        let aseprite = match aseprites.get(handle) {
+    for (entity, &transform, path_handle) in query.iter_mut() {
+        let aseprite_path = match aseprite_paths.get(path_handle) {
+            Some(path) => path,
+            None => {
+                error!("AsepritePath handle point to nothing");
+                continue;
+            }
+        };
+        let aseprite_handle = match path_to_ase_h.0.get(&aseprite_path.path) {
+            Some(aseprite_handle) => aseprite_handle,
+            None => {
+                error!("Aseprite path not found in map to handles");
+                continue;
+            }
+        };
+        let aseprite = match aseprites.get(aseprite_handle) {
             Some(aseprite) => aseprite,
             None => {
-                debug!("Aseprite handle invalid");
+                error!("Aseprite invalid");
                 continue;
             }
         };
-        let atlas = match aseprite.atlas.clone() {
-            Some(atlas) => atlas,
-            None => {
-                debug!("Aseprite atlas not ready");
-                continue;
-            }
-        };
-        commands.entity(entity).insert_bundle(SpriteSheetBundle {
-            texture_atlas: atlas,
-            transform,
-            ..Default::default()
-        });
+        commands
+            .entity(entity)
+            .insert_bundle(SpriteSheetBundle {
+                texture_atlas: aseprite.atlas.clone(),
+                transform,
+                ..Default::default()
+            })
+            .insert(aseprite_handle.clone());
     }
 }

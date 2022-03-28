@@ -216,14 +216,7 @@ pub(crate) fn update_animations(
                 continue;
             }
         };
-        let info = match &aseprite.info {
-            Some(info) => info,
-            None => {
-                error!("Aseprite info is None");
-                continue;
-            }
-        };
-        if animation.update(info, time.delta()) {
+        if animation.update(&aseprite.info, time.delta()) {
             sprite.index = aseprite.frame_to_idx[animation.current_frame];
         }
     }
