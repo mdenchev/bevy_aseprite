@@ -1,6 +1,6 @@
 [package]
 name = "bevy_aseprite"
-version = "0.1.1"
+version = "0.1.2"
 description = "Bevy aseprite loader"
 edition = "2021"
 resolver = "2"
