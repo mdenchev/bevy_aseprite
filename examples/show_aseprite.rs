@@ -60,32 +60,32 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn change_animation(
     keys: Res<Input<KeyCode>>,
-    mut aseprites: QuerySet<(
-        QueryState<&mut AsepriteAnimation, With<CrowTag>>,
-        QueryState<&mut AsepriteAnimation, With<PlayerTag>>,
+    mut aseprites: ParamSet<(
+        Query<&mut AsepriteAnimation, With<CrowTag>>,
+        Query<&mut AsepriteAnimation, With<PlayerTag>>,
     )>,
 ) {
     if keys.just_pressed(KeyCode::Key1) {
-        for mut crow_anim in aseprites.q0().iter_mut() {
+        for mut crow_anim in aseprites.p0().iter_mut() {
             *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS);
         }
-        for mut player_anim in aseprites.q1().iter_mut() {
+        for mut player_anim in aseprites.p1().iter_mut() {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::LEFT_WALK);
         }
     }
     if keys.just_pressed(KeyCode::Key2) {
-        for mut crow_anim in aseprites.q0().iter_mut() {
+        for mut crow_anim in aseprites.p0().iter_mut() {
             *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::GROOVE);
         }
-        for mut player_anim in aseprites.q1().iter_mut() {
+        for mut player_anim in aseprites.p1().iter_mut() {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::RIGHT_WALK);
         }
     }
     if keys.just_pressed(KeyCode::Space) {
-        for mut crow_anim in aseprites.q0().iter_mut() {
+        for mut crow_anim in aseprites.p0().iter_mut() {
             crow_anim.toggle();
         }
-        for mut player_anim in aseprites.q1().iter_mut() {
+        for mut player_anim in aseprites.p1().iter_mut() {
             player_anim.toggle();
         }
     }
