@@ -2,7 +2,7 @@
 
 This is a fork of TheNeikos/bevy_spicy_aseprite.
 
-Works with Bevy 0.6
+Works with Bevy 0.8
 
 Add `bevy_aseprite = "0.7"` to your Cargo.toml.
 
@@ -17,7 +17,7 @@ Add `bevy_aseprite = "0.7"` to your Cargo.toml.
         ..Default::default()
     });
 ```
-    
+
 
 ## How to use it with derive (for compile time validation)
 
