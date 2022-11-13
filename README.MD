@@ -2,15 +2,15 @@
 
 This is a fork of TheNeikos/bevy_spicy_aseprite.
 
-Works with Bevy 0.8
+Works with Bevy 0.9
 
-Add `bevy_aseprite = "0.7"` to your Cargo.toml.
+Add `bevy_aseprite = "0.9"` to your Cargo.toml.
 
 
 ## How to use it without derives
 
 ```rust,ignore
-    commands.spawn_bundle(AsepriteBundle {
+    commands.spawn(AsepriteBundle {
         aseprite: asset_server.load("player.ase"),
         animation: AsepriteAnimation::from("walk"),
         transform: Transform {...},
@@ -29,7 +29,7 @@ Add `bevy_aseprite = "0.7"` to your Cargo.toml.
 
     ...
 
-    commands.spawn_bundle(AsepriteBundle {
+    commands.spawn(AsepriteBundle {
         aseprite: asset_server.load(sprites::Player::PATH),
         animation: AsepriteAnimation::from(sprites::Player::tags::LEFT_WALK),
         transform: Transform {...},
