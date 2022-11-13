@@ -94,7 +94,7 @@ pub(crate) fn process_load(
                     );
                     let _label = format!("Frame{}", idx);
                     let texture_handle = images.add(texture.clone());
-                    frame_handles.push(texture_handle.as_weak());
+                    frame_handles.push(texture_handle.cast_weak());
 
                     atlas.add_texture(texture_handle, &texture);
                 }
@@ -148,7 +148,7 @@ pub(crate) fn insert_sprite_sheet(
                 continue;
             }
         };
-        commands.entity(entity).insert_bundle(SpriteSheetBundle {
+        commands.entity(entity).insert(SpriteSheetBundle {
             texture_atlas: atlas,
             transform,
             ..Default::default()

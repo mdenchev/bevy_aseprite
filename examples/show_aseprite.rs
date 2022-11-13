@@ -18,7 +18,7 @@ mod sprites {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugin(AsepritePlugin)
         .add_startup_system(setup)
         .add_startup_system(setup_text)
@@ -27,12 +27,10 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    asset_server.watch_for_changes().unwrap();
-
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(AsepriteBundle {
+        .spawn(AsepriteBundle {
             aseprite: asset_server.load(sprites::Crow::PATH),
             animation: AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS),
             transform: Transform {
@@ -45,7 +43,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(CrowTag);
 
     commands
-        .spawn_bundle(AsepriteBundle {
+        .spawn(AsepriteBundle {
             aseprite: asset_server.load(sprites::Player::PATH),
             animation: AsepriteAnimation::from(sprites::Player::tags::LEFT_WALK),
             transform: Transform {
@@ -92,8 +90,6 @@ fn change_animation(
 }
 
 fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
-    asset_server.watch_for_changes().unwrap();
-
     let font = asset_server.load("Share-Regular.ttf");
 
     let text_style = TextStyle {
@@ -108,7 +104,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     };
 
-    commands.spawn_bundle(Text2dBundle {
+    commands.spawn(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
                 vertical: VerticalAlign::Center,
@@ -127,7 +123,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 
-    commands.spawn_bundle(Text2dBundle {
+    commands.spawn(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
                 vertical: VerticalAlign::Center,
@@ -146,7 +142,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 
-    commands.spawn_bundle(Text2dBundle {
+    commands.spawn(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
                 vertical: VerticalAlign::Center,
@@ -181,7 +177,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 
-    commands.spawn_bundle(Text2dBundle {
+    commands.spawn(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
                 vertical: VerticalAlign::Center,
