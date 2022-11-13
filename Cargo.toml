@@ -13,7 +13,10 @@ members = ["derive", "reader"]
 
 [dependencies]
 anyhow = "1.0.43"
-bevy = { version = "0.9", default-features = false, features = ["render"] }
+bevy = { version = "0.9", default-features = false, features = [
+    "bevy_asset",
+    "render"
+] }
 bevy_aseprite_derive = { path = "./derive", version = "0.2" }
 bevy_aseprite_reader = { path = "./reader", version = "0.1" }
 
