@@ -34,14 +34,14 @@ impl Plugin for AsepritePlugin {
 #[uuid = "b29abc81-6179-42e4-b696-3a5a52f44f73"]
 pub struct Aseprite {
     // Data is dropped after the atlas is built
-    data: Option<reader::Aseprite>,
+    pub data: Option<reader::Aseprite>,
     // Info stores data such as tags and slices
-    info: Option<AsepriteInfo>,
+    pub info: Option<AsepriteInfo>,
     // TextureAtlasBuilder might shift the index order when building so
     // we keep a mapping of frame# -> atlas index here
-    frame_to_idx: Vec<usize>,
+    pub frame_to_idx: Vec<usize>,
     // Atlas that gets built from the frame info of the aseprite file
-    atlas: Option<Handle<TextureAtlas>>,
+    pub atlas: Option<Handle<TextureAtlas>>,
 }
 
 /// A bundle defining a drawn aseprite
