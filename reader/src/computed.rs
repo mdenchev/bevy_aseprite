@@ -711,7 +711,7 @@ fn image_for_frame(aseprite: &Aseprite, frame: u16) -> AseResult<RgbaImage> {
     let dim = aseprite.dimensions;
     let mut image = RgbaImage::new(dim.0 as u32, dim.1 as u32);
     for (_layer_id, layer) in &aseprite.layers {
-        if !layer.is_visible() {
+        if !layer.is_visible() || layer.is_group() {
             continue;
         }
 
