@@ -437,6 +437,14 @@ impl AsepriteLayer {
         }
     }
 
+    /// Returns `true` if the aseprite layer is [`Group`].
+    ///
+    /// [`Group`]: AsepriteLayer::Group
+    #[must_use]
+    pub fn is_group(&self) -> bool {
+        matches!(self, Self::Group { .. })
+    }
+
     fn cel_count(&self) -> usize {
         match self {
             AsepriteLayer::Group { .. } => 0,
