@@ -437,6 +437,14 @@ impl AsepriteLayer {
         }
     }
 
+    /// Returns `true` if the aseprite layer is [`Group`].
+    ///
+    /// [`Group`]: AsepriteLayer::Group
+    #[must_use]
+    pub fn is_group(&self) -> bool {
+        matches!(self, Self::Group { .. })
+    }
+
     fn cel_count(&self) -> usize {
         match self {
             AsepriteLayer::Group { .. } => 0,
@@ -703,7 +711,7 @@ fn image_for_frame(aseprite: &Aseprite, frame: u16) -> AseResult<RgbaImage> {
     let dim = aseprite.dimensions;
     let mut image = RgbaImage::new(dim.0 as u32, dim.1 as u32);
     for (_layer_id, layer) in &aseprite.layers {
-        if !layer.is_visible() {
+        if !layer.is_visible() || layer.is_group() {
             continue;
         }
 
