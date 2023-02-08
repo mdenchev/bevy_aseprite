@@ -715,26 +715,32 @@ fn image_for_frame(aseprite: &Aseprite, frame: u16) -> AseResult<RgbaImage> {
             continue;
         }
 
-        let blank_cel = AsepriteCel {
-            x: 0.0,
-            y: 0.0,
-            opacity: 0,
-            raw_cel: RawAsepriteCel::Raw {
-                width: dim.0,
-                height: dim.1,
-                pixels: vec![
-                    AsepritePixel::RGBA(AsepriteColor {
-                        red: 0,
-                        green: 0,
-                        blue: 0,
-                        alpha: 0,
-                    });
-                    (dim.0 * dim.1) as usize
-                ],
-            },
-        };
+        let mut blank_cel: AsepriteCel;
 
-        let cel = layer.get_cel(frame as usize).unwrap_or(&blank_cel);
+        let cel = match layer.get_cel(frame as usize) {
+            Ok(aseprite_cel) => aseprite_cel,
+            Err(_) => {
+                blank_cel = AsepriteCel {
+                    x: 0.0,
+                    y: 0.0,
+                    opacity: 0,
+                    raw_cel: RawAsepriteCel::Raw {
+                        width: dim.0,
+                        height: dim.1,
+                        pixels: vec![
+                            AsepritePixel::RGBA(AsepriteColor {
+                                red: 0,
+                                green: 0,
+                                blue: 0,
+                                alpha: 0,
+                            });
+                            (dim.0 * dim.1) as usize
+                        ],
+                    },
+                };
+                &blank_cel
+            }
+        };
 
         let mut write_to_image = |cel: &AsepriteCel,
                                   width: u16,
