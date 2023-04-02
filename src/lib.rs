@@ -16,7 +16,7 @@ use reader::AsepriteInfo;
 
 pub struct AsepritePlugin;
 
-#[derive(Debug, SystemLabel, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, SystemSet, Clone, Hash, PartialEq, Eq)]
 enum AsepriteSystems {
     InsertSpriteSheet,
 }
@@ -26,7 +26,7 @@ impl Plugin for AsepritePlugin {
         app.add_asset::<Aseprite>()
             .add_asset_loader(loader::AsepriteLoader)
             .add_system(loader::process_load)
-            .add_system(loader::insert_sprite_sheet.label(AsepriteSystems::InsertSpriteSheet))
+            .add_system(loader::insert_sprite_sheet.in_set(AsepriteSystems::InsertSpriteSheet))
             .add_system(anim::update_animations.after(AsepriteSystems::InsertSpriteSheet));
     }
 }
