@@ -17,7 +17,7 @@ It exports a main [`Aseprite`] type, through which the parsed contents can be ac
 ## Examples
 
 ```rust
-use aseprite_reader::Aseprite;
+use bevy_aseprite_reader::Aseprite;
 
 fn load_character() {
     let aseprite = Aseprite::from_path("assets/sprites/character.aseprite")

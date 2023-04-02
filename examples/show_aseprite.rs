@@ -106,10 +106,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center,
-            },
+            alignment: TextAlignment::Center,
             sections: vec![TextSection {
                 value: String::from("Press '1' and '2' to switch animations."),
                 style: TextStyle {
@@ -125,10 +122,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center,
-            },
+            alignment: TextAlignment::Center,
             sections: vec![TextSection {
                 value: String::from("Press 'space' to pause."),
                 style: TextStyle {
@@ -144,10 +138,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center,
-            },
+            alignment: TextAlignment::Center,
             sections: vec![
                 TextSection {
                     value: String::from("The crow was made by "),
@@ -179,10 +170,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center,
-            },
+            alignment: TextAlignment::Center,
             sections: vec![
                 TextSection {
                     value: String::from("The human was made by "),
