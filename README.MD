@@ -2,9 +2,9 @@
 
 This is a fork of TheNeikos/bevy_spicy_aseprite.
 
-Works with Bevy 0.9
+Works with Bevy 0.10
 
-Add `bevy_aseprite = "0.9"` to your Cargo.toml.
+Add `bevy_aseprite = "0.10"` to your Cargo.toml.
 
 
 ## How to use it without derives
