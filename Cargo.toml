@@ -18,7 +18,7 @@ bevy = { version = "0.10.0", default-features = false, features = [
     "bevy_render",
     "bevy_sprite"
 ] }
-bevy_aseprite_derive = { path = "./derive", version = "0.2" }
+bevy_aseprite_derive = { path = "./derive", version = "0.3" }
 bevy_aseprite_reader = { path = "./reader", version = "0.1" }
 
 [dev-dependencies]
