@@ -6,7 +6,7 @@ mod loader;
 
 use anim::AsepriteAnimation;
 use bevy::prelude::*;
-use bevy::reflect::TypeUuid;
+use bevy::reflect::{TypePath, TypeUuid};
 
 use bevy_aseprite_reader as reader;
 
@@ -25,12 +25,18 @@ impl Plugin for AsepritePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_asset::<Aseprite>()
             .add_asset_loader(loader::AsepriteLoader)
-            .add_system(loader::process_load)
-            .add_system(loader::insert_sprite_sheet.in_set(AsepriteSystems::InsertSpriteSheet))
-            .add_system(anim::update_animations.after(AsepriteSystems::InsertSpriteSheet));
+            .add_systems(Update, loader::process_load)
+            .add_systems(
+                Update,
+                loader::insert_sprite_sheet.in_set(AsepriteSystems::InsertSpriteSheet),
+            )
+            .add_systems(
+                Update,
+                anim::update_animations.after(AsepriteSystems::InsertSpriteSheet),
+            );
     }
 }
-#[derive(Debug, Clone, TypeUuid)]
+#[derive(Debug, Clone, TypePath, TypeUuid)]
 #[uuid = "b29abc81-6179-42e4-b696-3a5a52f44f73"]
 pub struct Aseprite {
     // Data is dropped after the atlas is built

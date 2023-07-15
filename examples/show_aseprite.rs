@@ -19,10 +19,10 @@ mod sprites {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugin(AsepritePlugin)
-        .add_startup_system(setup)
-        .add_startup_system(setup_text)
-        .add_system(change_animation)
+        .add_plugins(AsepritePlugin)
+        .add_systems(Startup, setup)
+        .add_systems(Startup, setup_text)
+        .add_systems(Update, change_animation)
         .run();
 }
 
