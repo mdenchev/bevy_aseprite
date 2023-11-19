@@ -23,8 +23,8 @@ enum AsepriteSystems {
 
 impl Plugin for AsepritePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_asset::<Aseprite>()
-            .add_asset_loader(loader::AsepriteLoader)
+        app.init_asset::<Aseprite>()
+            .register_asset_loader(loader::AsepriteLoader)
             .add_systems(Update, loader::process_load)
             .add_systems(
                 Update,
@@ -36,7 +36,8 @@ impl Plugin for AsepritePlugin {
             );
     }
 }
-#[derive(Debug, Clone, TypePath, TypeUuid)]
+
+#[derive(Debug, Clone, TypePath, TypeUuid, Asset)]
 #[uuid = "b29abc81-6179-42e4-b696-3a5a52f44f73"]
 pub struct Aseprite {
     // Data is dropped after the atlas is built
