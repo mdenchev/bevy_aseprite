@@ -145,13 +145,14 @@ pub(crate) fn insert_sprite_sheet(
                 continue;
             }
         };
-        let atlas = match aseprite.atlas.clone() {
+        let mut atlas = match aseprite.atlas.clone() {
             Some(atlas) => atlas,
             None => {
                 debug!("Aseprite atlas not ready");
                 continue;
             }
         };
+
         commands.entity(entity).insert(SpriteSheetBundle {
             texture_atlas: atlas,
             transform,
