@@ -2,12 +2,13 @@
 
 This is a fork of TheNeikos/bevy_spicy_aseprite.
 
-Add `bevy_aseprite = "0.11"` to your Cargo.toml.
+Add `bevy_aseprite = "0.12"` to your Cargo.toml.
 
 Compatability table
 
 | bevy | bevy_aseprite |
 | ---- | ------------- |
+| 0.12 | 0.12          |
 | 0.11 | 0.11          |
 | 0.10 | 0.10          |
 | 0.9  | 0.9           |
