@@ -65,4 +65,4 @@ cargo run --example show_slice
 
 ## Limitations
 
-Currently no support for slices or toggling layers.
+Currently no support for toggling layers.
