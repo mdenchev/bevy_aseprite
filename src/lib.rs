@@ -4,6 +4,7 @@
 pub mod anim;
 mod error;
 mod loader;
+pub mod slice;
 
 use anim::AsepriteAnimation;
 use bevy::{
@@ -38,7 +39,11 @@ impl Plugin for AsepritePlugin {
             .add_systems(Update, loader::process_load)
             .add_systems(
                 Update,
-                loader::insert_sprite_sheet.in_set(AsepriteSystems::InsertSpriteSheet),
+                (
+                    loader::insert_sprite_sheet,
+                    slice::insert_slice_sprite_sheet,
+                )
+                    .in_set(AsepriteSystems::InsertSpriteSheet),
             )
             .add_systems(
                 Update,
@@ -67,5 +72,13 @@ pub struct AsepriteBundle {
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub animation: AsepriteAnimation,
+    pub aseprite: Handle<Aseprite>,
+}
+
+#[derive(Debug, Bundle, Default)]
+pub struct AsepriteSliceBundle {
+    pub transform: Transform,
+    pub global_transform: GlobalTransform,
+    pub slice: slice::AsepriteSlice,
     pub aseprite: Handle<Aseprite>,
 }
