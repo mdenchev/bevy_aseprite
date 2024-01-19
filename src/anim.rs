@@ -197,6 +197,11 @@ impl AsepriteAnimation {
     pub fn toggle(&mut self) {
         self.is_playing = !self.is_playing;
     }
+
+    /// Get the current animation tag
+    pub fn tag(&self) -> String {
+        self.tag.clone().expect("AsepriteAnimation has no tag")
+    }
 }
 
 pub(crate) fn update_animations(
