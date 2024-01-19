@@ -70,6 +70,8 @@ impl Aseprite {
 
         let frame_count = raw.frames.len();
 
+        let mut frame_idx: usize = 0;
+
         for frame in raw.frames {
             frame_infos.push(AsepriteFrameInfo {
                 delay_ms: frame.duration_ms as usize,
@@ -114,7 +116,10 @@ impl Aseprite {
                             .get_mut(&(layer_index as usize))
                             .ok_or(AsepriteInvalidError::InvalidLayer(layer_index as usize))?;
 
-                        layer.add_cel(AsepriteCel::new(x as f64, y as f64, opacity, cel))?;
+                        layer.add_cel(
+                            frame_idx,
+                            AsepriteCel::new(x as f64, y as f64, opacity, cel),
+                        )?;
                     }
                     crate::raw::RawAsepriteChunk::CelExtra {
                         flags: _,
@@ -183,6 +188,8 @@ impl Aseprite {
                     } => warn!("Not yet implemented color profile"),
                 }
             }
+
+            frame_idx += 1;
         }
 
         Ok(Aseprite {
@@ -381,8 +388,8 @@ pub enum AsepriteLayer {
         visible: bool,
         /// How deep it is nested in the layer hierarchy
         child_level: u16,
-        /// Cels
-        cels: Vec<AsepriteCel>,
+        /// Cels keyed by frame index
+        cels: HashMap<usize, AsepriteCel>,
     },
 }
 
@@ -404,7 +411,7 @@ impl AsepriteLayer {
                 opacity,
                 visible,
                 child_level,
-                cels: vec![],
+                cels: HashMap::new(),
             },
             AsepriteLayerType::Group => AsepriteLayer::Group {
                 name,
@@ -453,14 +460,16 @@ impl AsepriteLayer {
         }
     }
 
-    fn add_cel(&mut self, cel: AsepriteCel) -> AseResult<()> {
+    fn add_cel(&mut self, frame: usize, cel: AsepriteCel) -> AseResult<()> {
         match self {
             AsepriteLayer::Group { id, .. } => {
                 return Err(AsepriteError::InvalidConfiguration(
                     AsepriteInvalidError::InvalidLayer(*id),
                 ));
             }
-            AsepriteLayer::Normal { cels, .. } => cels.push(cel),
+            AsepriteLayer::Normal { cels, .. } => {
+                cels.insert(frame, cel);
+            }
         }
 
         Ok(())
@@ -471,7 +480,7 @@ impl AsepriteLayer {
             AsepriteLayer::Group { id, .. } => Err(AsepriteError::InvalidConfiguration(
                 AsepriteInvalidError::InvalidLayer(*id),
             )),
-            AsepriteLayer::Normal { cels, .. } => cels.get(frame).ok_or(
+            AsepriteLayer::Normal { cels, .. } => cels.get(&frame).ok_or(
                 AsepriteError::InvalidConfiguration(AsepriteInvalidError::InvalidFrame(frame)),
             ),
         }
