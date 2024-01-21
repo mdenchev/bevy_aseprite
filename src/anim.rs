@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{ops::Range, time::Duration};
 
 use bevy::prelude::*;
 
@@ -28,7 +28,9 @@ impl AsepriteTag {
 pub struct AsepriteAnimation {
     pub is_playing: bool,
     tag: Option<String>,
+    frame_range: Range<usize>,
     pub current_frame: usize,
+    just_finished: bool,
     forward: bool,
     time_elapsed: Duration,
     tag_changed: bool,
@@ -39,10 +41,12 @@ impl Default for AsepriteAnimation {
         Self {
             is_playing: true,
             tag: Default::default(),
+            frame_range: 0..2,
             current_frame: Default::default(),
             forward: Default::default(),
             time_elapsed: Default::default(),
             tag_changed: true,
+            just_finished: false,
         }
     }
 }
@@ -60,15 +64,15 @@ impl AsepriteAnimation {
                     }
                 };
 
-                let range = tag.frames.clone();
+                self.frame_range = (tag.frames.start as usize)..(tag.frames.end as usize);
                 use reader::raw::AsepriteAnimationDirection;
                 match tag.animation_direction {
                     AsepriteAnimationDirection::Forward | AsepriteAnimationDirection::PingPong => {
-                        self.current_frame = range.start as usize;
+                        self.current_frame = self.frame_range.start;
                         self.forward = true;
                     }
                     AsepriteAnimationDirection::Reverse => {
-                        self.current_frame = range.end as usize - 1;
+                        self.current_frame = self.frame_range.end - 1;
                         self.forward = false;
                     }
                 }
@@ -76,6 +80,7 @@ impl AsepriteAnimation {
             None => {
                 self.current_frame = 0;
                 self.forward = true;
+                self.frame_range = 0..info.frame_count;
             }
         }
     }
@@ -162,9 +167,11 @@ impl AsepriteAnimation {
         while self.time_elapsed >= current_frame_duration {
             self.time_elapsed -= current_frame_duration;
             self.next_frame(info);
+            self.just_finished = (self.frame_range.end - 1) == self.current_frame;
             current_frame_duration = self.current_frame_duration(info);
             frame_changed = true;
         }
+
         frame_changed
     }
 
@@ -197,6 +204,11 @@ impl AsepriteAnimation {
     pub fn toggle(&mut self) {
         self.is_playing = !self.is_playing;
     }
+
+    /// Returns `true` at the very end of current animation
+    pub fn just_finished(&self) -> bool {
+        self.just_finished
+    }
 }
 
 pub(crate) fn update_animations(
@@ -209,6 +221,7 @@ pub(crate) fn update_animations(
     )>,
 ) {
     for (handle, mut animation, mut sprite) in aseprites_query.iter_mut() {
+        animation.just_finished = false;
         let aseprite = match aseprites.get(handle) {
             Some(aseprite) => aseprite,
             None => {
