@@ -134,9 +134,12 @@ pub(crate) fn process_load(
 pub(crate) fn insert_sprite_sheet(
     mut commands: Commands,
     aseprites: ResMut<Assets<Aseprite>>,
-    mut query: Query<(Entity, &Handle<Aseprite>, &mut AsepriteAnimation), Without<TextureAtlas>>,
+    mut query: Query<
+        (Entity, &Transform, &Handle<Aseprite>),
+        (Without<TextureAtlas>, With<AsepriteAnimation>),
+    >,
 ) {
-    for (entity, handle, _anim) in query.iter_mut() {
+    for (entity, &transform, handle) in query.iter_mut() {
         // FIXME The first time the query runs the aseprite atlas might not be ready
         // so failing to find it is expected.
         let aseprite = match aseprites.get(handle) {
@@ -166,6 +169,7 @@ pub(crate) fn insert_sprite_sheet(
                 index: 0,
             },
             texture: image,
+            transform,
             ..Default::default()
         });
     }
