@@ -57,13 +57,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn change_animation(
-    keys: Res<Input<KeyCode>>,
+    keys: Res<ButtonInput<KeyCode>>,
     mut aseprites: ParamSet<(
         Query<&mut AsepriteAnimation, With<CrowTag>>,
         Query<&mut AsepriteAnimation, With<PlayerTag>>,
     )>,
 ) {
-    if keys.just_pressed(KeyCode::Key1) {
+    if keys.just_pressed(KeyCode::Digit1) {
         for mut crow_anim in aseprites.p0().iter_mut() {
             *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS);
         }
@@ -71,7 +71,7 @@ fn change_animation(
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::LEFT_WALK);
         }
     }
-    if keys.just_pressed(KeyCode::Key2) {
+    if keys.just_pressed(KeyCode::Digit2) {
         for mut crow_anim in aseprites.p0().iter_mut() {
             *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::GROOVE);
         }
@@ -106,7 +106,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment::Center,
+            justify: JustifyText::Center,
             sections: vec![TextSection {
                 value: String::from("Press '1' and '2' to switch animations."),
                 style: TextStyle {
@@ -122,7 +122,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment::Center,
+            justify: JustifyText::Center,
             sections: vec![TextSection {
                 value: String::from("Press 'space' to pause."),
                 style: TextStyle {
@@ -138,7 +138,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment::Center,
+            justify: JustifyText::Center,
             sections: vec![
                 TextSection {
                     value: String::from("The crow was made by "),
@@ -170,7 +170,7 @@ fn setup_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Text2dBundle {
         text: Text {
-            alignment: TextAlignment::Center,
+            justify: JustifyText::Center,
             sections: vec![
                 TextSection {
                     value: String::from("The human was made by "),
