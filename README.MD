@@ -25,6 +25,16 @@ Compatability table
     });
 ```
 
+## How to use it to load slices
+
+```rust,ignore
+    cmd.spawn(AsepriteSliceBundle {
+        aseprite: server.load("ghost_slices.aseprite"),
+        slice: AsepriteSlice::new("ghost_red").flip_x(),
+        transform: Transform {...},
+        ..Default::default()
+    });
+```
 
 ## How to use it with derive (for compile time validation)
 
@@ -50,8 +60,9 @@ Check out the example to see how it could be used:
 
 ```bash
 cargo run --example show_aseprite
+cargo run --example show_slice
 ```
 
 ## Limitations
 
-Currently no support for slices or toggling layers.
+Currently no support for toggling layers.
