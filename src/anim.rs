@@ -175,6 +175,11 @@ impl AsepriteAnimation {
         self.current_frame
     }
 
+    /// Get the tag
+    pub fn tag(&self) -> Option<&str> {
+        self.tag.as_deref()
+    }
+
     /// Start or resume playing an animation
     pub fn play(&mut self) {
         self.is_playing = true;
