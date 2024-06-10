@@ -209,11 +209,7 @@ impl AsepriteAnimation {
 pub(crate) fn update_animations(
     time: Res<Time>,
     aseprites: Res<Assets<Aseprite>>,
-    mut aseprites_query: Query<(
-        &Handle<Aseprite>,
-        &mut AsepriteAnimation,
-        &mut TextureAtlasSprite,
-    )>,
+    mut aseprites_query: Query<(&Handle<Aseprite>, &mut AsepriteAnimation, &mut TextureAtlas)>,
 ) {
     for (handle, mut animation, mut sprite) in aseprites_query.iter_mut() {
         let aseprite = match aseprites.get(handle) {

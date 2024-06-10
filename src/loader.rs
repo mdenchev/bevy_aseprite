@@ -1,11 +1,13 @@
-use crate::{anim::AsepriteAnimation, Aseprite, error};
+use crate::{anim::AsepriteAnimation, error, Aseprite};
 use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     prelude::*,
-    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+    render::{
+        render_asset::RenderAssetUsages,
+        render_resource::{Extent3d, TextureDimension, TextureFormat},
+    },
 };
 use bevy_aseprite_reader as reader;
-
 
 #[derive(Debug, Default)]
 pub struct AsepriteLoader;
@@ -33,6 +35,7 @@ impl AssetLoader for AsepriteLoader {
                 info: None,
                 frame_to_idx: vec![],
                 atlas: None,
+                image: None,
             })
         })
     }
@@ -46,7 +49,7 @@ pub(crate) fn process_load(
     mut asset_events: EventReader<AssetEvent<Aseprite>>,
     mut aseprites: ResMut<Assets<Aseprite>>,
     mut images: ResMut<Assets<Image>>,
-    mut atlases: ResMut<Assets<TextureAtlas>>,
+    mut atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     asset_events.read().for_each(|event| {
         if let AssetEvent::Added { id } | AssetEvent::Modified { id } = event {
@@ -87,24 +90,28 @@ pub(crate) fn process_load(
             let mut frame_handles = vec![];
             let mut atlas = TextureAtlasBuilder::default();
 
-            for (idx, image) in ase_images.into_iter().enumerate() {
-                let texture = Image::new(
-                    Extent3d {
-                        width: image.width(),
-                        height: image.height(),
-                        depth_or_array_layers: 1,
-                    },
-                    TextureDimension::D2,
-                    image.into_raw(),
-                    TextureFormat::Rgba8UnormSrgb,
-                );
-                let _label = format!("Frame{}", idx);
+            let textures = ase_images
+                .into_iter()
+                .map(|image| {
+                    Image::new(
+                        Extent3d {
+                            width: image.width(),
+                            height: image.height(),
+                            depth_or_array_layers: 1,
+                        },
+                        TextureDimension::D2,
+                        image.into_raw(),
+                        TextureFormat::Rgba8UnormSrgb,
+                        RenderAssetUsages::MAIN_WORLD,
+                    )
+                })
+                .collect::<Vec<_>>();
+            for texture in textures.iter() {
                 let texture_handle = images.add(texture.clone());
                 frame_handles.push(texture_handle.clone_weak());
-
-                atlas.add_texture(texture_handle.id(), &texture);
+                atlas.add_texture(Some(texture_handle.id()), texture);
             }
-            let atlas = match atlas.finish(&mut *images) {
+            let (atlas, image) = match atlas.finish() {
                 Ok(atlas) => atlas,
                 Err(err) => {
                     error!("{:?}", err);
@@ -116,8 +123,10 @@ pub(crate) fn process_load(
                 ase.frame_to_idx.push(atlas_idx);
             }
             let atlas_handle = atlases.add(atlas);
+            let image_handle = images.add(image);
             ase.info = Some(data.into());
             ase.atlas = Some(atlas_handle);
+            ase.image = Some(image_handle);
         }
     });
 }
@@ -126,16 +135,11 @@ pub(crate) fn insert_sprite_sheet(
     mut commands: Commands,
     aseprites: ResMut<Assets<Aseprite>>,
     mut query: Query<
-        (
-            Entity,
-            &Transform,
-            &Handle<Aseprite>,
-            &mut AsepriteAnimation,
-        ),
-        Without<TextureAtlasSprite>,
+        (Entity, &Transform, &Handle<Aseprite>),
+        (Without<TextureAtlas>, With<AsepriteAnimation>),
     >,
 ) {
-    for (entity, &transform, handle, _anim) in query.iter_mut() {
+    for (entity, &transform, handle) in query.iter_mut() {
         // FIXME The first time the query runs the aseprite atlas might not be ready
         // so failing to find it is expected.
         let aseprite = match aseprites.get(handle) {
@@ -152,9 +156,19 @@ pub(crate) fn insert_sprite_sheet(
                 continue;
             }
         };
-
+        let image = match aseprite.image.clone() {
+            Some(image) => image,
+            None => {
+                debug!("Aseprite image not ready");
+                continue;
+            }
+        };
         commands.entity(entity).insert(SpriteSheetBundle {
-            texture_atlas: atlas,
+            atlas: TextureAtlas {
+                layout: atlas,
+                index: 0,
+            },
+            texture: image,
             transform,
             ..Default::default()
         });
