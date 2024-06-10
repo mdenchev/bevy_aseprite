@@ -24,11 +24,12 @@ impl AsepriteTag {
     }
 }
 
-#[derive(Debug, Component, PartialEq, Eq)]
+#[derive(Debug, Component, PartialEq)]
 pub struct AsepriteAnimation {
     pub is_playing: bool,
     tag: Option<String>,
     pub current_frame: usize,
+    pub custom_size: Option<Vec2>,
     forward: bool,
     time_elapsed: Duration,
     tag_changed: bool,
@@ -40,6 +41,7 @@ impl Default for AsepriteAnimation {
             is_playing: true,
             tag: Default::default(),
             current_frame: Default::default(),
+            custom_size: None,
             forward: Default::default(),
             time_elapsed: Default::default(),
             tag_changed: true,
@@ -197,6 +199,11 @@ impl AsepriteAnimation {
     pub fn toggle(&mut self) {
         self.is_playing = !self.is_playing;
     }
+    
+    pub const fn with_size(mut self, size: Option<Vec2>) -> Self {
+        self.custom_size = size;
+        self
+    }
 }
 
 pub(crate) fn update_animations(
@@ -219,6 +226,9 @@ pub(crate) fn update_animations(
                 continue;
             }
         };
+
+        sprite.custom_size = animation.custom_size;
+
         if animation.update(info, time.delta()) {
             sprite.index = aseprite.frame_to_idx[animation.current_frame];
         }
